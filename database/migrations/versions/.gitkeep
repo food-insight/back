@@ -1,0 +1,2 @@
+# migrations 버전 파일 저장 폴더
+# 마이그레이션 파일은 Flask-Migrate에 의해 자동 생성됩니다
