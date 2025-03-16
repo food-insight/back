@@ -5,11 +5,11 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 from pathlib import Path
 
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_community.embeddings import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.vectorstores import Chroma
+from langchain_community.vectorstores import Chroma
 from langchain.docstore.document import Document
-from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 
 class RAGService:
