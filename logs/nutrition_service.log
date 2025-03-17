@@ -1,24 +1,111 @@
-2025-03-16 23:59:40,803 - __main__ - INFO - 데이터 파이프라인 초기화 시작
-2025-03-16 23:59:40,805 - services.init - INFO - 서비스 초기화 시작
-2025-03-16 23:59:40,806 - services.init - WARNING - OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.
-2025-03-16 23:59:40,821 - services.food_database - INFO - 데이터베이스 스키마 초기화 완료
-2025-03-16 23:59:40,822 - services.init - INFO - 서비스 초기화 완료
-2025-03-16 23:59:40,822 - __main__ - INFO - 샘플 데이터 생성 시작
-2025-03-16 23:59:40,822 - utils.data_pipeline_tasks - INFO - 샘플 식품 데이터 CSV 파일 생성 시작: database/default_data/korean_foods.csv
-2025-03-16 23:59:40,832 - utils.data_pipeline_tasks - INFO - 샘플 식품 데이터 CSV 파일 생성 완료: database/default_data/korean_foods.csv
-2025-03-16 23:59:40,832 - utils.data_pipeline_tasks - INFO - 샘플 레시피 JSON 파일 생성 시작: database/default_data/korean_recipes.json
-2025-03-16 23:59:40,833 - utils.data_pipeline_tasks - INFO - 샘플 레시피 JSON 파일 생성 완료: database/default_data/korean_recipes.json
-2025-03-16 23:59:40,834 - utils.data_pipeline_tasks - INFO - 샘플 영양 관련 문서 생성 시작: database/data/nutrition_articles
-2025-03-16 23:59:40,837 - utils.data_pipeline_tasks - INFO - 샘플 영양 관련 문서 생성 완료: 4개 파일
-2025-03-16 23:59:40,837 - __main__ - INFO - 샘플 데이터 생성 완료: 식품 CSV(database/default_data/korean_foods.csv), 레시피 JSON(database/default_data/korean_recipes.json), 문서(4개)
-2025-03-16 23:59:40,837 - utils.data_pipeline_tasks - INFO - 식품 CSV 파일 처리 및 임포트 시작: database/default_data/korean_foods.csv
-2025-03-16 23:59:40,838 - services.data_processor - INFO - 식품 CSV 파일 처리 시작: database/default_data/korean_foods.csv
-2025-03-16 23:59:40,857 - services.data_processor - INFO - 식품 CSV 파일 처리 완료: database/data\korean_foods_processed.csv
-2025-03-16 23:59:40,857 - utils.data_pipeline_tasks - INFO - 전처리 완료. 소요 시간: 0.02초
-2025-03-16 23:59:40,857 - services.food_database - INFO - CSV에서 식품 데이터 가져오기 시작: database/data\korean_foods_processed.csv
-2025-03-16 23:59:40,881 - services.food_database - INFO - 식품 데이터 15/15 임포트 완료
-2025-03-16 23:59:40,882 - services.food_database - INFO - 총 15개의 식품 데이터 가져오기 완료
-2025-03-16 23:59:40,882 - utils.data_pipeline_tasks - INFO - 데이터베이스 임포트 완료. 소요 시간: 0.03초
-2025-03-16 23:59:40,882 - utils.data_pipeline_tasks - INFO - 식품 CSV 파일 처리 및 임포트 완료. 총 소요 시간: 0.04초
-2025-03-16 23:59:40,882 - __main__ - INFO - 샘플 식품 데이터 임포트 완료: 15개
-2025-03-16 23:59:40,882 - __main__ - INFO - 데이터 파이프라인 초기화 완료. 소요 시간: 0.08초
+2025-03-17 13:27:51,344 - services.init - INFO - 서비스 모듈 초기화 시작
+2025-03-17 13:27:51,349 - __main__ - INFO - 데이터 파이프라인 초기화 시작
+2025-03-17 13:27:51,349 - services.init - INFO - 서비스 초기화 시작
+2025-03-17 13:27:51,351 - services.food_database - INFO - 데이터베이스 스키마 초기화 완료
+2025-03-17 13:27:52,456 - services.rag_service - INFO - 임베딩 모델 초기화 완료
+2025-03-17 13:27:52,456 - services.rag_service - INFO - 기존 벡터 데이터베이스 로드
+2025-03-17 13:27:52,951 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-03-17 13:27:53,147 - services.init - INFO - RAG 서비스 초기화 성공
+2025-03-17 13:27:53,147 - services.init - INFO - 서비스 초기화 완료
+2025-03-17 13:27:53,147 - __main__ - INFO - 샘플 데이터 생성 시작
+2025-03-17 13:27:53,147 - utils.data_pipeline_tasks - INFO - 샘플 식품 데이터 CSV 파일 생성 시작: database/default_data/korean_foods.csv
+2025-03-17 13:27:53,152 - utils.data_pipeline_tasks - INFO - 샘플 식품 데이터 CSV 파일 생성 완료: database/default_data/korean_foods.csv
+2025-03-17 13:27:53,152 - utils.data_pipeline_tasks - INFO - 샘플 레시피 JSON 파일 생성 시작: database/default_data/korean_recipes.json
+2025-03-17 13:27:53,153 - utils.data_pipeline_tasks - INFO - 샘플 레시피 JSON 파일 생성 완료: database/default_data/korean_recipes.json
+2025-03-17 13:27:53,153 - utils.data_pipeline_tasks - INFO - 샘플 영양 관련 문서 생성 시작: database/data/nutrition_articles
+2025-03-17 13:27:53,154 - utils.data_pipeline_tasks - INFO - 샘플 영양 관련 문서 생성 완료: 4개 파일
+2025-03-17 13:27:53,155 - __main__ - INFO - 샘플 데이터 생성 완료: 식품 CSV(database/default_data/korean_foods.csv), 레시피 JSON(database/default_data/korean_recipes.json), 문서(4개)
+2025-03-17 13:27:53,155 - utils.data_pipeline_tasks - INFO - 식품 CSV 파일 처리 및 임포트 시작: database/default_data/korean_foods.csv
+2025-03-17 13:27:53,155 - services.data_processor - INFO - 식품 CSV 파일 처리 시작: database/default_data/korean_foods.csv
+2025-03-17 13:27:53,161 - services.data_processor - INFO - 식품 CSV 파일 처리 완료: database/data\korean_foods_processed.csv
+2025-03-17 13:27:53,161 - utils.data_pipeline_tasks - INFO - 전처리 완료. 소요 시간: 0.01초
+2025-03-17 13:27:53,161 - services.food_database - INFO - CSV에서 식품 데이터 가져오기 시작: database/data\korean_foods_processed.csv
+2025-03-17 13:27:53,170 - services.food_database - INFO - 식품 데이터 15/15 임포트 완료
+2025-03-17 13:27:53,171 - services.food_database - INFO - 총 15개의 식품 데이터 가져오기 완료
+2025-03-17 13:27:53,171 - utils.data_pipeline_tasks - INFO - 데이터베이스 임포트 완료. 소요 시간: 0.01초
+2025-03-17 13:27:53,172 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 김치찌개
+2025-03-17 13:27:56,222 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:27:56,300 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:27:56,301 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 불고기
+2025-03-17 13:27:56,859 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:27:56,890 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:27:56,891 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 비빔밥
+2025-03-17 13:27:57,490 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:27:57,515 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:27:57,515 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 김치
+2025-03-17 13:27:58,149 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:27:58,176 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:27:58,177 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 떡볶이
+2025-03-17 13:27:58,690 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:27:58,841 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:27:58,842 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 라면
+2025-03-17 13:27:59,260 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:27:59,274 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:27:59,275 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 김밥
+2025-03-17 13:27:59,960 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:27:59,980 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:27:59,981 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 삼겹살
+2025-03-17 13:28:00,398 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:28:00,420 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:28:00,420 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 치킨
+2025-03-17 13:28:00,889 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:28:00,904 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:28:00,907 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 된장찌개
+2025-03-17 13:28:01,330 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:28:01,344 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:28:01,347 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 갈비탕
+2025-03-17 13:28:01,979 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:28:01,997 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:28:02,000 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 냉면
+2025-03-17 13:28:02,302 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:28:02,338 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:28:02,346 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 잡채
+2025-03-17 13:28:02,729 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:28:02,788 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:28:02,790 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 돈까스
+2025-03-17 13:28:03,292 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:28:03,335 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:28:03,339 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 제육볶음
+2025-03-17 13:28:03,739 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:28:03,772 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:28:03,774 - utils.data_pipeline_tasks - INFO - RAG 문서 추가 완료. 15개 문서, 소요 시간: 10.60초
+2025-03-17 13:28:03,775 - utils.data_pipeline_tasks - INFO - 식품 CSV 파일 처리 및 임포트 완료. 총 소요 시간: 10.62초
+2025-03-17 13:28:03,777 - __main__ - INFO - 샘플 식품 데이터 임포트 완료: 15개
+2025-03-17 13:28:03,778 - utils.data_pipeline_tasks - INFO - 영양 관련 문서 임포트 시작: database/data/nutrition_articles
+2025-03-17 13:28:04,109 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:28:04,178 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:28:04,989 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:28:05,001 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:28:05,489 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:28:05,499 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:28:05,839 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:28:05,951 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:28:06,238 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:28:06,250 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:28:06,679 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:28:06,753 - services.rag_service - INFO - 문서 추가 완료: 1개 청크 생성
+2025-03-17 13:28:06,765 - utils.data_pipeline_tasks - INFO - 영양 관련 문서 임포트 완료. 6개 문서 추가됨
+2025-03-17 13:28:06,765 - __main__ - INFO - 샘플 영양 문서 임포트 완료: 6개
+2025-03-17 13:28:06,765 - __main__ - INFO - 데이터베이스와 RAG 동기화 시작
+2025-03-17 13:28:06,769 - utils.data_pipeline_tasks - INFO - 식품 데이터베이스와 RAG 벡터 데이터베이스 동기화 시작
+2025-03-17 13:28:06,773 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 김치찌개
+2025-03-17 13:28:06,800 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 불고기
+2025-03-17 13:28:06,801 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 비빔밥
+2025-03-17 13:28:06,802 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 김치
+2025-03-17 13:28:06,802 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 떡볶이
+2025-03-17 13:28:06,803 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 라면
+2025-03-17 13:28:06,803 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 김밥
+2025-03-17 13:28:06,804 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 삼겹살
+2025-03-17 13:28:06,804 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 치킨
+2025-03-17 13:28:06,804 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 된장찌개
+2025-03-17 13:28:06,805 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 갈비탕
+2025-03-17 13:28:06,805 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 냉면
+2025-03-17 13:28:06,805 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 잡채
+2025-03-17 13:28:06,806 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 돈까스
+2025-03-17 13:28:06,806 - services.data_processor - INFO - 식품 데이터를 RAG 문서로 변환: 제육볶음
+2025-03-17 13:28:07,298 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-03-17 13:28:07,777 - services.rag_service - INFO - 문서 추가 완료: 15개 청크 생성
+2025-03-17 13:28:07,778 - utils.data_pipeline_tasks - INFO - 배치 1/1 동기화 완료: 15개 문서 추가됨
+2025-03-17 13:28:07,778 - utils.data_pipeline_tasks - INFO - 식품 데이터베이스와 RAG 벡터 데이터베이스 동기화 완료. 15개 문서 동기화됨
+2025-03-17 13:28:07,778 - __main__ - INFO - 데이터베이스와 RAG 동기화 완료: 15개 문서
+2025-03-17 13:28:07,778 - __main__ - INFO - 데이터 파이프라인 초기화 완료. 소요 시간: 16.43초
