@@ -20,15 +20,15 @@ def create_app(config_name='development'):
     CORS(app)
 
     # 블루프린트 등록
-    from app.routes.auth import auth_bp
-    from app.routes.meal import meal_bp
-    from app.routes.nutrition import nutrition_bp
-    from app.routes.recommendation import recommendation_bp
-    from app.routes.user import user_bp
-    from app.routes.chatbot import chatbot_bp
-    from app.routes.image import image_bp
-    from app.routes.speech import speech_bp
-    from app.routes.main import main_bp
+    from app.routers.auth import auth_bp
+    from app.routers.meal import meal_bp
+    from app.routers.nutrition import nutrition_bp
+    from app.routers.recommendation import recommendation_bp
+    from app.routers.user import user_bp
+    from app.routers.chatbot import chatbot_bp
+    from app.routers.image import image_bp
+    from app.routers.speech import speech_bp
+    from app.routers.main import main_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(meal_bp, url_prefix='/api/meals')
