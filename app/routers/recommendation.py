@@ -8,7 +8,7 @@ from models.recommendation import Recommendation
 from models.allergy import Allergy
 from services.recommendation import generate_meal_recommendations, generate_food_alternatives
 from services.rag_service import get_recipe_recommendations
-from utils.response import success_response, error_response
+from utils.responses import success_response, error_response
 from datetime import datetime, timedelta
 
 recommendation_bp = Blueprint('recommendation', __name__)

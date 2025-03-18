@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from app.extensions import db
 from services.food_recognition import recognize_food_from_image
-from utils.response import success_response, error_response
+from utils.responses import success_response, error_response
 from utils.image_processing import is_allowed_image, save_image, process_image
 import os
 import uuid

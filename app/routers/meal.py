@@ -3,10 +3,10 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.extensions import db, cache
 from models.meal import Meal
 from models.food import Food
-from services.food_recognition import recognize_food_from_image
+from services.food_recognition_service import recognize_food_from_image
 from services.nutrition_analysis import analyze_meal_nutrition
 from app.helpers.meal_helper import process_meal_image, save_meal_image
-from utils.response import success_response, error_response
+from utils.responses import success_response, error_response
 from werkzeug.utils import secure_filename
 import os
 import uuid

@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.extensions import db
 from models.user import User
 from models.allergy import Allergy
-from utils.response import success_response, error_response
+from utils.responses import success_response, error_response
 from utils.validators import validate_email, validate_password
 from datetime import datetime
 

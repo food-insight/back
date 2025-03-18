@@ -5,7 +5,7 @@ from .food_database import FoodDatabaseService
 from .rag_service import RAGService
 from .data_processor import DataProcessorService
 from .nutrition_analysis import NutritionAnalysisService
-from .food_recognition import FoodRecognitionService
+from .food_recognition_service import FoodRecognitionService
 from .recommendation import RecommendationService
 
 class ServiceManager:

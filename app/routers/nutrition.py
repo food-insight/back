@@ -6,7 +6,7 @@ from models.food import Food
 from models.user import User
 from services.nutrition_analysis import analyze_meal_nutrition, get_nutrition_insights
 from services.rag_service import get_nutritional_research
-from utils.response import success_response, error_response
+from utils.responses import success_response, error_response
 from datetime import datetime, timedelta
 
 nutrition_bp = Blueprint('nutrition', __name__)

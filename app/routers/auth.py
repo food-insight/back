@@ -6,7 +6,7 @@ from flask_jwt_extended import (
 from datetime import datetime
 from app.extensions import db, jwt, limiter
 from models.user import User
-from utils.response import success_response, error_response
+from utils.responses import success_response, error_response
 from utils.validators import validate_email, validate_password
 
 auth_bp = Blueprint('auth', __name__)

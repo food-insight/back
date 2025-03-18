@@ -5,7 +5,7 @@ from models.user import User
 from models.meal import Meal
 from models.food import Food
 from models.recommendation import Recommendation
-from utils.response import success_response, error_response
+from utils.responses import success_response, error_response
 from datetime import datetime, timedelta
 
 main_bp = Blueprint('main', __name__)

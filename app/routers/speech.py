@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from app.extensions import db
 from services.speech_to_text import transcribe_audio, extract_meal_information
-from utils.response import success_response, error_response
+from utils.responses import success_response, error_response
 import os
 import uuid
 
@@ -123,7 +123,7 @@ def recognize_food_by_speech():
         transcript = transcribe_audio(audio_path)
 
         # 음식 이름만 추출
-        from services.food_recognition import extract_food_names_from_text
+        from services.food_recognition_service import extract_food_names_from_text
         food_names = extract_food_names_from_text(transcript)
 
         if not food_names:
