@@ -6,6 +6,7 @@ from flask_jwt_extended import (
 from datetime import datetime, timedelta
 from app.extensions import db, jwt, limiter
 from models.user import User
+from models.allergy import Allergy
 from utils.responses import success_response, error_response
 from utils.validators import validate_email, validate_password
 
@@ -46,8 +47,7 @@ def register():
         # allergies 리스트 → 쉼표로 구분된 문자열 변환
         allergies_str = ",".join(data.get('allergies', [])) if isinstance(data.get('allergies'), list) else ""
 
-
-    # 사용자 생성
+        # 사용자 생성
         user = User(
             email=data['email'],
             password=data['password'],
@@ -58,6 +58,14 @@ def register():
             health_goal=data.get('health_goal')
         )
         db.session.add(user)
+        db.session.flush()  # ID를 얻기 위해 flush 실행
+
+        # Allergy 테이블에도 알레르기 정보 저장
+        if 'allergies' in data and isinstance(data.get('allergies'), list):
+            for allergy_name in data.get('allergies'):
+                allergy = Allergy(uid=user.uid, allergy_name=allergy_name)
+                db.session.add(allergy)
+
         db.session.commit()
 
         return success_response({
