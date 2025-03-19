@@ -14,6 +14,24 @@ class RecommendationService:
     """
     식품 추천 및 레시피 통합 서비스
     """
+
+    
+class RecommendationService:
+# 기존 메서드들...
+
+    def recommend_balanced_meal(self, preferences, restrictions):
+        # 예시 구현: 입력받은 preferences, restrictions에 따라 추천 식단 반환
+        # 실제 로직에 맞게 수정 필요합니다.
+        recommended_meal = {
+            "recommended_meal": "현미밥 + 닭가슴살 or 소고기 + 달걀 + 야채  ",
+            "calories": 500,
+            "protein": 40,
+            "carbs": 50,
+            "fats": 10,
+            "success": True
+        }
+        return recommended_meal
+
     def __init__(self, food_db=None, rag_service=None):
         """
         추천 서비스 초기화

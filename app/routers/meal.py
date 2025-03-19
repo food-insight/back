@@ -13,12 +13,57 @@ def get_meal_helpers():
     from app.helpers.meal_helper import process_meal_image, save_meal_image, create_meal_record
     return process_meal_image, save_meal_image, create_meal_record
 
-@meal_bp.route('/upload', methods=['POST'])
+# ✅ 추가: 식단 추천 데이터
+MEAL_RECOMMENDATIONS = {
+    "low_carb": ["닭가슴살 샐러드", "연어 스테이크", "두부 샐러드"],
+    "high_protein": ["소고기 스테이크", "계란 오믈렛", "참치 샐러드"],
+    "balanced": ["현미밥 + 닭가슴살", "불고기덮밥", "채소볶음밥"],
+    "vegetarian": ["채소 샐러드", "비건 버거", "토마토 스프"],
+}
+
+@meal_bp.route('/recommend/meal', methods=['POST'])
+@jwt_required()
+def recommend_meal():
+    """식단 추천 API"""
+    try:
+        user_id = get_jwt_identity()  # 현재 로그인한 사용자 ID 가져오기
+
+        # 사용자 선호도 (예: balanced, low_carb 등)
+        meal_type = request.args.get("type", "balanced")
+
+        # 존재하지 않는 식단 유형이면 기본값 설정
+        if meal_type not in MEAL_RECOMMENDATIONS:
+            meal_type = "balanced"
+
+        # 랜덤 추천
+        recommended_meal = random.choice(MEAL_RECOMMENDATIONS[meal_type])
+
+        # 영양 정보 예제 (DB 활용 가능)
+        NUTRITION_INFO = {
+            "닭가슴살 샐러드": {"calories": 350, "protein": 30, "carbs": 20, "fats": 10},
+            "연어 스테이크": {"calories": 400, "protein": 35, "carbs": 15, "fats": 20},
+            "현미밥 + 닭가슴살": {"calories": 500, "protein": 40, "carbs": 50, "fats": 10},
+        }
+
+        nutrition = NUTRITION_INFO.get(recommended_meal, {"calories": 0, "protein": 0, "carbs": 0, "fats": 0})
+
+        return jsonify({
+            "success": True,
+            "recommended_meal": recommended_meal,
+            "nutrition": nutrition
+        }), 200
+
+    except Exception as e:
+        logger.error(f"식단 추천 중 오류 발생: {str(e)}")
+        return jsonify({"error": "식단 추천 중 오류가 발생했습니다."}), 500
+
+@meal_bp.route('/upload', methods=['GET'])
 @jwt_required()
 def upload_meal_image():
     """식사 이미지 업로드 API"""
     try:
         user_id = get_jwt_identity()
+        
 
         if 'image' not in request.files:
             return jsonify({"error": "이미지 파일이 필요합니다."}), 400
