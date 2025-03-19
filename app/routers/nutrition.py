@@ -36,7 +36,7 @@ def analyze_meal(meal_id):
         # 사용자 정보 가져오기 (나이, 성별 등에 따른 권장 섭취량 계산을 위해)
         user = User.query.filter_by(uid=current_user_id).first()
 
-        # 영양 인사이트 생성
+        # 영양 인사이트 생성하기기
         insights = get_nutrition_insights(nutrition_data, user)
 
         return success_response({
