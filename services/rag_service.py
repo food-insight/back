@@ -5,9 +5,9 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 from pathlib import Path
 
-from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
+from langchain_chroma import Chroma
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.vectorstores import Chroma
 from langchain.docstore.document import Document
 from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
@@ -48,6 +48,10 @@ class RAGService:
         # 임베딩 및 벡터 저장소 초기화
         self._init_embedding_model()
         self._load_or_create_vector_db()
+
+    def is_initialized(self) -> bool:
+        """벡터 데이터베이스가 존재하는지 확인"""
+        return os.path.exists(self.vector_db_dir) and len(os.listdir(self.vector_db_dir)) > 0
 
     def _init_embedding_model(self):
         """임베딩 모델 초기화"""

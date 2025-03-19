@@ -10,16 +10,20 @@ from datetime import datetime
 class DataProcessorService:
     """데이터 처리 서비스"""
 
-    def __init__(self, data_dir: str = "database/data"):
+    def __init__(self, food_db=None, rag_service=None, data_dir: str = "database/data"):
         """
         데이터 처리 서비스 초기화
 
         Args:
+            food_db (Optional[Any]): 식품 데이터베이스 서비스
+            rag_service (Optional[Any]): RAG 서비스
             data_dir (str): 데이터 디렉토리
         """
         self.logger = logging.getLogger(__name__)
+        self.food_db = food_db
+        self.rag_service = rag_service
         self.data_dir = data_dir
-
+        
         # 디렉토리 생성
         os.makedirs(data_dir, exist_ok=True)
 

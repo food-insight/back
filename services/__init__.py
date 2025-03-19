@@ -7,6 +7,11 @@ from .data_processor import DataProcessorService
 from .nutrition_analysis import NutritionAnalysisService
 from .food_recognition_service import FoodRecognitionService
 from .recommendation import RecommendationService
+from dotenv import load_dotenv
+import os
+
+# .env 파일 로드
+load_dotenv()
 
 class ServiceManager:
     """
@@ -25,9 +30,14 @@ class ServiceManager:
         if self._initialized:
             return
 
+        # .env에서 OpenAI API 키 가져오기
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        if not openai_api_key:
+            raise ValueError("OPENAI_API_KEY가 설정되지 않았습니다.")
+
         # 기본 서비스 초기화
         self.food_db: FoodDatabaseService = FoodDatabaseService()
-        self.rag_service: RAGService = RAGService()
+        self.rag_service: RAGService = RAGService(openai_api_key=openai_api_key)  # API 키 전달
         self.data_processor: DataProcessorService = DataProcessorService(self.food_db, self.rag_service)
 
         # 기능 서비스 초기화 (의존성 주입)

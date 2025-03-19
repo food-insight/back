@@ -24,6 +24,10 @@ class FoodDatabaseService:
 
         # 데이터베이스 초기화
         self._init_database()
+    
+    def is_initialized(self) -> bool:
+        """ 데이터베이스 파일이 존재하는지 확인 """
+        return os.path.exists(self.db_path)
 
     def _init_database(self):
         """데이터베이스 스키마 초기화"""
