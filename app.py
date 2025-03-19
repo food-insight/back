@@ -5,6 +5,9 @@ from services import initialize_all
 # 환경 변수 로드
 load_dotenv()
 
+# 모델 임포트 - 이 부분이 중요합니다!
+import models
+
 # 서비스 초기화
 initialize_all(force_rebuild=False)
 

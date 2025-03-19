@@ -1,23 +1,18 @@
 from flask import jsonify
 
-def success_response(data=None, message="Success", status_code=200):
+def success_response(data, status_code=200):
     """
-    성공 응답을 생성하는 표준 함수
-    
-    :param data: 응답과 함께 보낼 데이터 (선택적)
-    :param message: 성공 메시지 (기본값: "Success")
-    :param status_code: HTTP 상태 코드 (기본값: 200)
-    :return: Flask JSON 응답
+    성공 응답을 위한 표준화된 응답 생성 함수
+
+    :param data: 응답에 포함될 데이터
+    :param status_code: HTTP 상태 코드 (기본값 200)
+    :return: JSON 응답
     """
     response = {
-        "success": True,
-        "message": message
+        'success': True,
+        'data': data
     }
-
-    if data is not None:
-        response["data"] = data
-
-    return jsonify(response), status_code
+    return response, status_code
 
 def error_response(message="Error", status_code=400, details=None):
     """

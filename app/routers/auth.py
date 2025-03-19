@@ -1,9 +1,9 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, make_response
 from flask_jwt_extended import (
     create_access_token, create_refresh_token,
     jwt_required, get_jwt_identity, get_jwt
 )
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.extensions import db, jwt, limiter
 from models.user import User
 from utils.responses import success_response, error_response
@@ -48,15 +48,8 @@ def register():
         db.session.add(user)
         db.session.commit()
 
-        # 토큰 생성
-        access_token = create_access_token(identity=user.uid)
-        refresh_token = create_refresh_token(identity=user.uid)
-
         return success_response({
-            'message': '회원가입이 완료되었습니다.',
-            'access_token': access_token,
-            'refresh_token': refresh_token,
-            'user': user.to_dict()
+            'message': '회원가입이 완료되었습니다.'
         }, 201)
     except Exception as e:
         db.session.rollback()
@@ -79,15 +72,23 @@ def login():
         return error_response('이메일 또는 비밀번호가 올바르지 않습니다.', 401)
 
     # 토큰 생성
-    access_token = create_access_token(identity=user.uid)
-    refresh_token = create_refresh_token(identity=user.uid)
+    access_token = create_access_token(identity=str(user.uid))
+    refresh_token = create_refresh_token(identity=str(user.uid))
 
-    return success_response({
+    # 응답 생성
+    response_data = {
         'message': '로그인 성공',
-        'access_token': access_token,
-        'refresh_token': refresh_token,
         'user': user.to_dict()
-    })
+    }
+
+    # HTTP 응답 생성
+    response = make_response(jsonify(success_response(response_data)))
+
+    # 토큰을 헤더에 추가
+    response.headers['Authorization'] = f'Bearer {access_token}'
+    response.headers['Refresh-Token'] = refresh_token
+
+    return response
 
 @auth_bp.route('/refresh', methods=['POST'])
 @jwt_required(refresh=True)
@@ -104,8 +105,6 @@ def refresh():
 @jwt_required()
 def logout():
     """로그아웃 API"""
-    # JWT 블랙리스트 처리는 JWT_BLOCKLIST를 사용하여 처리할 수 있음
-    # 여기서는 클라이언트에서 토큰을 삭제하도록 안내
     return success_response({
         'message': '로그아웃 성공. 클라이언트에서 토큰을 삭제해주세요.'
     })
@@ -113,9 +112,9 @@ def logout():
 # JWT 콜백 등록 (확장 시 사용)
 @jwt.user_identity_loader
 def user_identity_lookup(user_id):
-    return user_id
+    return str(user_id)
 
 @jwt.user_lookup_loader
 def user_lookup_callback(_jwt_header, jwt_data):
     identity = jwt_data["sub"]
-    return User.query.filter_by(uid=identity).one_or_none()
+    return User.query.filter_by(uid=int(identity)).one_or_none()
