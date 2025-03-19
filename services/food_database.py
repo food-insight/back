@@ -9,6 +9,43 @@ from pathlib import Path
 class FoodDatabaseService:
     """식품 데이터베이스 관리 서비스"""
 
+    def get_similar_foods(self, food_name: str, category: str, limit: int = 5) -> List[Dict[str, Any]]:
+        try:
+            conn = sqlite3.connect(self.db_path)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            # 기준 음식의 칼로리를 조회
+            cursor.execute("SELECT calories FROM foods WHERE name = ?", (food_name,))
+            row = cursor.fetchone()
+            if not row:
+                return []
+            base_calories = row["calories"]
+
+            # 같은 카테고리 내에서 기준 음식과 칼로리 차이를 기준으로 정렬
+            cursor.execute("""
+                SELECT *, ABS(calories - ?) as calorie_diff
+                FROM foods
+                WHERE category = ? AND name != ?
+                ORDER BY calorie_diff ASC
+                LIMIT ?
+            """, (base_calories, category, food_name, limit))
+            rows = cursor.fetchall()
+            similar_foods = []
+            for row in rows:
+                food = dict(row)
+                food["tags"] = json.loads(food["tags"]) if food["tags"] else []
+                similar_foods.append(food)
+            return similar_foods
+        except Exception as e:
+            self.logger.error(f"유사 음식 검색 오류: {str(e)}")
+            return []
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+        
+
     def __init__(self, db_path: str = "database/food_database.db"):
         """
         식품 데이터베이스 서비스 초기화

@@ -105,7 +105,10 @@ def register_api_endpoints(app):
     def recommend_similar():
         """유사 식품 추천 API"""
         food_name = request.args.get('food')
-        limit = int(request.args.get('limit', 5))
+        try:
+            limit = int(request.args.get('limit', 5))
+        except ValueError:
+            return jsonify({"error": "limit 값은 숫자여야 합니다."}), 400
 
         if not food_name:
             return jsonify({"error": "음식 이름을 지정해주세요."}), 400
@@ -114,6 +117,7 @@ def register_api_endpoints(app):
         result = recommendation_service.get_similar_foods(food_name, limit)
 
         return jsonify(result)
+
 
     @app.route('/api/chat', methods=['POST'])
     def chatbot_conversation():
