@@ -21,7 +21,6 @@ def create_app(config_name='development'):
 
     # 블루프린트 등록 - 지연 임포트 사용
     with app.app_context():
-        # 여기에서 블루프린트를 가져오면 앱 컨텍스트 내에서 가져오므로 순환 참조 방지
         from app.routers.auth import auth_bp
         from app.routers.meal import meal_bp
         from app.routers.nutrition import nutrition_bp
@@ -31,6 +30,7 @@ def create_app(config_name='development'):
         from app.routers.image import image_bp
         from app.routers.speech import speech_bp
         from app.routers.main import main_bp
+        from app.routers.recognition import recognition_bp  # 음식 인식 Blueprint 추가
 
         app.register_blueprint(auth_bp, url_prefix='/api/auth')
         app.register_blueprint(meal_bp, url_prefix='/api/meals')
@@ -41,11 +41,12 @@ def create_app(config_name='development'):
         app.register_blueprint(image_bp, url_prefix='/api/images')
         app.register_blueprint(speech_bp, url_prefix='/api/speech')
         app.register_blueprint(main_bp, url_prefix='/api/main')
+        app.register_blueprint(recognition_bp, url_prefix='/api/recognize')  # 새로운 음식 인식 엔드포인트
 
     # 오류 핸들러 등록
     register_error_handlers(app)
 
-    # API 엔드포인트 추가
+    # 기존 API 엔드포인트 추가 (영양 분석, 추천, 챗봇, 식단 추천 등)
     register_api_endpoints(app)
 
     return app
@@ -73,7 +74,7 @@ def register_error_handlers(app):
         return {'error': 'Internal server error'}, 500
 
 def register_api_endpoints(app):
-    """API 엔드포인트 등록"""
+    """API 엔드포인트 등록 (영양 분석, 추천, 챗봇, 식단 추천 등)"""
     from flask import jsonify, request
     from services import service_manager
 
@@ -81,7 +82,10 @@ def register_api_endpoints(app):
     def get_nutrition():
         """식품 영양 정보 API"""
         food_name = request.args.get('food')
-        quantity = float(request.args.get('quantity', 100))
+        try:
+            quantity = float(request.args.get('quantity', 100))
+        except ValueError:
+            return jsonify({"error": "quantity 값은 숫자여야 합니다."}), 400
         unit = request.args.get('unit', 'g')
 
         if not food_name:
@@ -92,57 +96,10 @@ def register_api_endpoints(app):
 
         return jsonify(result)
 
-    @app.route('/api/recognize', methods=['POST'])
-    def recognize_food():
-        """식품 인식 API"""
-        try:
-            # 이미지 파일 처리
-            if 'image' in request.files:
-                image_file = request.files['image']
-
-                # 파일 확장자 및 MIME 타입 검증
-                allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
-                if not image_file.filename.lower().split('.')[-1] in allowed_extensions:
-                    return jsonify({"error": "지원되지 않는 이미지 형식입니다."}), 400
-
-                # 이미지 데이터 안전하게 읽기
-                image_data = image_file.read()
-
-                # 이미지 크기 제한 (예: 10MB)
-                if len(image_data) > 10 * 1024 * 1024:
-                    return jsonify({"error": "이미지 크기가 너무 큽니다."}), 400
-
-                recognition_service = service_manager.get_service('recognition')
-                result = recognition_service.recognize_food_from_image(image_data)
-
-                return jsonify({
-                    "foods": result.get('foods', []),
-                    "confidence": result.get('confidence', 0)
-                })
-
-            # 텍스트 기반 인식
-            elif request.json and 'text' in request.json:
-                text = request.json['text']
-
-                # 텍스트 유효성 검사
-                if not text or text.strip() == '':
-                    return jsonify({"error": "유효한 텍스트를 입력해주세요."}), 400
-
-                recognition_service = service_manager.get_service('recognition')
-                result = recognition_service.recognize_food_from_text(text)
-
-                return jsonify({
-                    "foods": result.get('foods', []),
-                    "source": "text"
-                })
-
-            else:
-                return jsonify({"error": "이미지 파일 또는 텍스트를 제공해주세요."}), 400
-
-        except Exception as e:
-            # 예상치 못한 오류 처리
-            app.logger.error(f"식품 인식 중 오류 발생: {str(e)}")
-            return jsonify({"error": "식품 인식 중 오류가 발생했습니다."}), 500
+    # /api/recognize 엔드포인트는 이제 recognition_bp에서 처리하므로 삭제 또는 주석처리
+    # @app.route('/api/recognize', methods=['POST'])
+    # def recognize_food():
+    #     ...
 
     @app.route('/api/recommend/similar', methods=['GET'])
     def recommend_similar():
