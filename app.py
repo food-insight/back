@@ -119,6 +119,6 @@ def recommend_meal():
     result = recommendation_service.recommend_balanced_meal(preferences, restrictions)
 
     return jsonify(result)
-if __name__ == "main":
+if __name__ == "__main__":
     # 개발 서버 실행
     app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
