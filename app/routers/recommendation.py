@@ -15,7 +15,8 @@ recommendation_bp = Blueprint('recommendation', __name__)
 
 @recommendation_bp.route('/meal', methods=['GET'])
 @jwt_required()
-@cache.cached(timeout=3600, key_prefix=lambda: f'meal_recommendations_{get_jwt_identity()}')
+# 캐시 비활성화 (문제 해결 후 필요하면 다시 활성화)
+# @cache.cached(timeout=3600, key_prefix=lambda: f'meal_recommendations_{get_jwt_identity()}')
 def get_meal_recommendations():
     """개인 맞춤형 식단 추천 API"""
     current_user_id = get_jwt_identity()
@@ -28,6 +29,9 @@ def get_meal_recommendations():
     # 사용자 알레르기 정보
     allergies = Allergy.query.filter_by(uid=current_user_id).all()
     allergy_list = [allergy.allergy_name for allergy in allergies]
+
+    # 디버깅 로그 추가
+    current_app.logger.debug(f"사용자 ID: {current_user_id}, 알레르기 목록: {allergy_list}")
 
     # 최근 식사 기록 조회 (지난 30일)
     start_date = datetime.now().date() - timedelta(days=30)
