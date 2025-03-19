@@ -54,7 +54,6 @@ def upload_meal_image():
 @meal_bp.route('/', methods=['POST'])
 @jwt_required()
 def add_meal_record():
-    """식사 기록 추가 API"""
     try:
         user_id = get_jwt_identity()
         data = request.json
@@ -62,9 +61,14 @@ def add_meal_record():
         if not data:
             return jsonify({"error": "식사 데이터가 필요합니다."}), 400
 
-        # 식사 기록 생성 (헬퍼 함수 사용)
-        _, _, create_meal_record = get_meal_helpers()
-        result = create_meal_record(user_id, data)
+        # service_manager를 통해 meal_service 호출
+        meal_service = service_manager.get_service('meal')
+
+        # user_id와 data를 모두 전달
+        result = meal_service.add_meal_record(
+            user_id=user_id,  # 첫 번째 인자로 user_id 전달
+            data=data          # 두 번째 인자로 data 전달
+        )
 
         if not result.get('success', False):
             return jsonify({"error": result.get('error', '식사 기록 생성 중 오류가 발생했습니다.')}), 500
@@ -72,7 +76,7 @@ def add_meal_record():
         return jsonify({
             "success": True,
             "meal_id": result.get('meal_id'),
-            "message": "식사 기록이 성공적으로 저장되었습니다."
+            "message": result.get('message')
         }), 201
 
     except Exception as e:

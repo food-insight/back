@@ -1,4 +1,3 @@
-# services/__init__.py
 from typing import Optional, Dict, Any
 
 from .food_database import FoodDatabaseService
@@ -7,6 +6,12 @@ from .data_processor import DataProcessorService
 from .nutrition_analysis import NutritionAnalysisService
 from .food_recognition_service import FoodRecognitionService
 from .recommendation import RecommendationService
+from .meal_service import MealService
+from .chatbot import PersonalizedNutritionChatbot, initialize_nutrition_chatbot
+from .chatbot_service import ChatbotService
+from repositories.user_repository import UserRepository
+from repositories.meal_repository import MealRepository
+from services.nutrition_service import NutritionService
 from dotenv import load_dotenv
 import os
 
@@ -37,13 +42,25 @@ class ServiceManager:
 
         # 기본 서비스 초기화
         self.food_db: FoodDatabaseService = FoodDatabaseService()
-        self.rag_service: RAGService = RAGService(openai_api_key=openai_api_key)  # API 키 전달
+        self.rag_service: RAGService = RAGService(openai_api_key=openai_api_key)
         self.data_processor: DataProcessorService = DataProcessorService(self.food_db, self.rag_service)
 
         # 기능 서비스 초기화 (의존성 주입)
         self.nutrition_analysis: NutritionAnalysisService = NutritionAnalysisService(self.food_db, self.rag_service)
         self.food_recognition: FoodRecognitionService = FoodRecognitionService(self.food_db, self.rag_service)
         self.recommendation: RecommendationService = RecommendationService(self.food_db, self.rag_service)
+
+        # Meal 서비스 추가
+        self.meal: MealService = MealService()
+
+        # Chatbot 서비스 추가 (래퍼 클래스 사용)
+        chatbot_instance = initialize_nutrition_chatbot(
+            openai_api_key=openai_api_key,
+            user_repository=UserRepository(),
+            nutrition_service=NutritionService(),
+            meal_repository=MealRepository()
+        )
+        self.chatbot: ChatbotService = ChatbotService(chatbot_instance)
 
         self._initialized = True
 
@@ -78,7 +95,9 @@ class ServiceManager:
             'data_processor': self.data_processor,
             'nutrition': self.nutrition_analysis,
             'recognition': self.food_recognition,
-            'recommendation': self.recommendation
+            'recommendation': self.recommendation,
+            'meal': self.meal,
+            'chatbot': self.chatbot  # 래퍼 클래스 사용
         }
 
         return services.get(service_name)
@@ -93,6 +112,8 @@ data_processor = service_manager.data_processor
 nutrition_analysis = service_manager.nutrition_analysis
 food_recognition = service_manager.food_recognition
 recommendation = service_manager.recommendation
+meal = service_manager.meal
+chatbot = service_manager.chatbot
 
 def initialize_all(force_rebuild: bool = False) -> ServiceManager:
     """

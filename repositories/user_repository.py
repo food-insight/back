@@ -1,13 +1,30 @@
-class UserRepository:
-    """
-    사용자 관련 데이터베이스 작업을 관리하는 레포지토리 클래스
-    """
-    def __init__(self):
+from services.chatbot import UserRepository as BaseUserRepository
+from models.user import User
+
+class UserRepository(BaseUserRepository):
+    def get_user(self, user_id: str):
         """
-        UserRepository 초기화
-        실제 구현에서는 데이터베이스 연결을 설정합니다.
+        사용자 ID로 사용자 정보 조회
+
+        Args:
+            user_id (str): 사용자 ID
+
+        Returns:
+            User 객체
         """
-        pass
+        # get_user_by_id 메서드를 기반으로 수정
+        user_info = self.get_user_by_id(int(user_id))
+
+        # User 모델과 유사한 객체 생성
+        class UserObject:
+            def __init__(self, info):
+                self.uid = info['id']
+                self.email = info['email']
+                self.name = info['username']
+                self.health_goal = '체중 감량'  # 기본값 설정
+                self.__dict__.update(info)
+
+        return UserObject(user_info)
 
     def get_user_by_id(self, user_id):
         """
@@ -19,7 +36,7 @@ class UserRepository:
         Returns:
             dict: 사용자 정보 또는 찾지 못했을 경우 None
         """
-        # 임시 구현
+        # 기존 구현 유지
         return {
             'id': user_id,
             'username': '샘플_사용자',
@@ -41,5 +58,5 @@ class UserRepository:
         Returns:
             bool: 업데이트 성공 시 True, 실패 시 False
         """
-        # 임시 구현
+        # 기존 구현 유지
         return True

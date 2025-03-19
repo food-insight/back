@@ -2,11 +2,46 @@ import logging
 from typing import List, Dict, Any, Optional
 import json
 from datetime import datetime, timedelta
+import os
 
 # AI 모델 관련 라이브러리
-from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
+
+# 의존성 주입용 추상 클래스
+from abc import ABC, abstractmethod
+
+class UserRepository(ABC):
+    @abstractmethod
+    def get_user(self, user_id: str):
+        pass
+
+class NutritionService(ABC):
+    @abstractmethod
+    def calculate_daily_nutrition(self, meals):
+        pass
+
+    @abstractmethod
+    def get_nutrition_insights(self, daily_nutrition, is_average=True):
+        pass
+
+    @abstractmethod
+    def get_recipe_recommendations(self, health_goal: str):
+        pass
+
+    @abstractmethod
+    def get_food_nutrition(self, food_name: str):
+        pass
+
+class MealRepository(ABC):
+    @abstractmethod
+    def get_meals_by_date_range(self, user_id, start_date, end_date):
+        pass
+
+    @abstractmethod
+    def get_recent_meals(self, user_id, limit=3):
+        pass
 
 class PersonalizedNutritionChatbot:
     """
@@ -15,20 +50,13 @@ class PersonalizedNutritionChatbot:
     def __init__(
             self,
             openai_api_key: str,
-            user_repository,
-            nutrition_service,
-            meal_repository,
+            user_repository: UserRepository,
+            nutrition_service: NutritionService,
+            meal_repository: MealRepository,
             context_window_days: int = 7
     ):
         """
         챗봇 서비스 초기화
-
-        Args:
-            openai_api_key (str): OpenAI API 키
-            user_repository: 사용자 정보 저장소
-            nutrition_service: 영양 분석 서비스
-            meal_repository: 식사 기록 저장소
-            context_window_days (int): 대화 컨텍스트에 포함할 식사 기록 일수
         """
         self.logger = logging.getLogger(__name__)
 
@@ -84,12 +112,6 @@ class PersonalizedNutritionChatbot:
     def _get_recent_nutrition_context(self, user_id: str) -> Dict[str, Any]:
         """
         최근 영양 섭취 컨텍스트 조회
-
-        Args:
-            user_id (str): 사용자 ID
-
-        Returns:
-            Dict[str, Any]: 최근 영양 섭취 컨텍스트
         """
         try:
             # 최근 식사 기록 조회 (지정된 기간 내)
@@ -124,14 +146,6 @@ class PersonalizedNutritionChatbot:
     ) -> Dict[str, Any]:
         """
         개인화된 챗봇 응답 생성
-
-        Args:
-            user_id (str): 사용자 ID
-            user_message (str): 사용자 메시지
-            conversation_history (Optional[List[Dict[str, str]]]): 대화 이력
-
-        Returns:
-            Dict[str, Any]: 챗봇 응답
         """
         try:
             # 사용자 정보 조회
@@ -174,12 +188,6 @@ class PersonalizedNutritionChatbot:
     def analyze_conversation_intent(self, user_message: str) -> Dict[str, Any]:
         """
         사용자 메시지의 의도 분석
-
-        Args:
-            user_message (str): 사용자 메시지
-
-        Returns:
-            Dict[str, Any]: 대화 의도 분석 결과
         """
         try:
             # 대화 의도 분석을 위한 프롬프트
@@ -240,13 +248,6 @@ class PersonalizedNutritionChatbot:
     ) -> Dict[str, Any]:
         """
         의도에 기반한 개인화된 추천 생성
-
-        Args:
-            user_id (str): 사용자 ID
-            intent_category (str): 대화 의도 카테고리
-
-        Returns:
-            Dict[str, Any]: 개인화된 추천
         """
         try:
             # 사용자 정보 조회
@@ -292,15 +293,9 @@ class PersonalizedNutritionChatbot:
             self.logger.error(f"개인화된 추천 생성 중 오류: {str(e)}")
             return {}
 
-    def _generate_goal_specific_recommendations(self, user: Any) -> List[Dict[str, str]]:
+    def _generate_goal_specific_recommendations(self, user):
         """
         건강 목표별 맞춤 추천 생성
-
-        Args:
-            user (Any): 사용자 정보
-
-        Returns:
-            List[Dict[str, str]]: 목표별 추천 액션
         """
         goal_recommendations = {
             "체중 감량": [
@@ -340,15 +335,9 @@ class PersonalizedNutritionChatbot:
             [{"title": "건강한 식습관", "description": "균형 잡힌 영양 섭취"}]
         )
 
-    def _generate_general_nutrition_tips(self, user: Any) -> List[Dict[str, str]]:
+    def _generate_general_nutrition_tips(self, user):
         """
         일반적인 영양 팁 생성
-
-        Args:
-            user (Any): 사용자 정보
-
-        Returns:
-            List[Dict[str, str]]: 일반 영양 팁
         """
         return [
             {
@@ -367,21 +356,12 @@ class PersonalizedNutritionChatbot:
 
 def initialize_nutrition_chatbot(
         openai_api_key: str,
-        user_repository,
-        nutrition_service,
-        meal_repository
+        user_repository: UserRepository,
+        nutrition_service: NutritionService,
+        meal_repository: MealRepository
 ) -> PersonalizedNutritionChatbot:
     """
     영양 챗봇 서비스 초기화
-
-    Args:
-        openai_api_key (str): OpenAI API 키
-        user_repository: 사용자 정보 저장소
-        nutrition_service: 영양 분석 서비스
-        meal_repository: 식사 기록 저장소
-
-    Returns:
-        PersonalizedNutritionChatbot: 초기화된 영양 챗봇 서비스
     """
     return PersonalizedNutritionChatbot(
         openai_api_key=openai_api_key,

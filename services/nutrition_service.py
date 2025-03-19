@@ -1,83 +1,102 @@
-class NutritionService:
-    """
-    영양 관련 계산 및 추천을 처리하는 서비스 클래스
-    """
-    def __init__(self):
-        """
-        NutritionService 초기화
-        """
-        pass
+from services.chatbot import NutritionService as BaseNutritionService
 
-    def calculate_daily_nutrition_needs(self, user_id):
+class NutritionService(BaseNutritionService):
+    def calculate_daily_nutrition(self, meals):
         """
-        특정 사용자의 일일 영양 필요량 계산
-
+        일일 영양 섭취량 계산
+        
         Args:
-            user_id (int): 사용자의 고유 식별자
-
+            meals (List[Dict]): 식사 기록 목록
+        
         Returns:
-            dict: 권장 일일 영양소 섭취량
+            Dict: 일일 영양 섭취량 정보
         """
-        # 임시 구현
-        return {
-            '칼로리': 2000,
-            '단백질': 75,  # 그램
-            '탄수화물': 250,  # 그램
-            '지방': 65,  # 그램
-            '식이섬유': 25,  # 그램
+        daily_nutrition = {
+            'total_calories': 0,
+            'total_protein': 0,
+            'total_carbs': 0,
+            'total_fat': 0
         }
 
-    def analyze_nutrition_intake(self, user_id, date=None):
-        """
-        특정 사용자의 영양 섭취 분석
+        for meal in meals:
+            daily_nutrition['total_calories'] += meal.get('total_calories', 0)
+            daily_nutrition['total_protein'] += meal.get('total_protein', 0)
+            daily_nutrition['total_carbs'] += meal.get('total_carbs', 0)
+            daily_nutrition['total_fat'] += meal.get('total_fat', 0)
 
+        return daily_nutrition
+
+    def get_nutrition_insights(self, daily_nutrition, is_average=True):
+        """
+        영양 섭취 인사이트 생성
+        
         Args:
-            user_id (int): 사용자의 고유 식별자
-            date (str, optional): 분석할 특정 날짜. 기본값은 오늘.
-
+            daily_nutrition (Dict): 일일 영양 섭취량
+            is_average (bool): 평균 계산 여부
+        
         Returns:
-            dict: 영양 섭취 분석 결과
+            Dict: 영양 섭취 인사이트
         """
-        # 임시 구현
         return {
-            '총 칼로리': 1850,
-            '총 단백질': 70,
-            '총 탄수화물': 220,
-            '총 지방': 55,
-            '추천 사항': [
-                '단백질 섭취를 조금 늘리세요.',
-                '과일과 채소 섭취를 늘리는 것이 좋습니다.'
+            'total_calories': daily_nutrition['total_calories'],
+            'insights': [
+                f"총 칼로리: {daily_nutrition['total_calories']}kcal",
+                f"단백질: {daily_nutrition['total_protein']}g",
+                f"탄수화물: {daily_nutrition['total_carbs']}g",
+                f"지방: {daily_nutrition['total_fat']}g"
             ]
         }
 
-    def generate_personalized_nutrition_plan(self, user_id):
+    def get_recipe_recommendations(self, health_goal: str):
         """
-        사용자를 위한 개인화된 영양 계획 생성
-
+        건강 목표에 따른 레시피 추천
+        
         Args:
-            user_id (int): 사용자의 고유 식별자
-
+            health_goal (str): 건강 목표
+        
         Returns:
-            dict: 개인화된 영양 계획
+            Dict: 레시피 추천 정보
         """
-        # 임시 구현
-        return {
-            '추천 식단': [
-                {
-                    '식사 종류': '아침',
-                    '음식': ['계란 오믈렛', '현미 토스트', '과일 샐러드'],
-                    '총 칼로리': 450
-                },
-                {
-                    '식사 종류': '점심',
-                    '음식': ['닭가슴살 샐러드', '퀴노아', '채소'],
-                    '총 칼로리': 550
-                },
-                {
-                    '식사 종류': '저녁',
-                    '음식': ['구운 연어', '구운 야채', '현미'],
-                    '총 칼로리': 500
-                }
+        # 기존 구현 유지
+        recommendations = {
+            '체중 감량': [
+                {'name': '그릴드 닭가슴살 샐러드', 'calories': 300},
+                {'name': '두부 현미밥', 'calories': 250}
             ],
-            '영양 목표': self.calculate_daily_nutrition_needs(user_id)
+            '근육 증가': [
+                {'name': '연어 퀴노아 볼', 'calories': 450},
+                {'name': '단백질 스무디', 'calories': 350}
+            ],
+            '당뇨 관리': [
+                {'name': '통곡물 아침 오트밀', 'calories': 280},
+                {'name': '저당 채소 스프', 'calories': 200}
+            ]
         }
+
+        return {
+            'recipes': recommendations.get(health_goal, [])
+        }
+
+    def get_food_nutrition(self, food_name: str):
+        """
+        특정 음식의 영양 정보 조회
+        
+        Args:
+            food_name (str): 음식 이름
+        
+        Returns:
+            Dict: 음식 영양 정보
+        """
+        # 기존 구현 유지
+        food_nutrition = {
+            '현미밥': {'calories': 150, 'protein': 3, 'carbohydrates': 30, 'fat': 1},
+            '닭가슴살': {'calories': 120, 'protein': 26, 'carbohydrates': 0, 'fat': 3},
+            '브로콜리': {'calories': 55, 'protein': 4, 'carbohydrates': 11, 'fat': 0.6}
+        }
+
+        return food_nutrition.get(food_name, {
+            'calories': 0,
+            'protein': 0,
+            'carbohydrates': 0,
+            'fat': 0
+        })
