@@ -7,13 +7,6 @@ class MealService:
     def add_meal_record(self, user_id, data):
         """
         새로운 식사 기록 추가
-
-        Args:
-            user_id (int): 사용자 ID
-            data (dict): 식사 기록 데이터
-
-        Returns:
-            dict: 작업 결과
         """
         try:
             # 식사 기록 생성
@@ -54,19 +47,6 @@ class MealService:
                        sort_by='datetime', sort_order='desc'):
         """
         사용자의 식사 기록 조회
-
-        Args:
-            user_id (int): 사용자 ID
-            start_date (str, optional): 시작 날짜
-            end_date (str, optional): 종료 날짜
-            meal_type (str, optional): 식사 유형
-            page (int): 페이지 번호
-            limit (int): 페이지당 항목 수
-            sort_by (str): 정렬 기준
-            sort_order (str): 정렬 순서
-
-        Returns:
-            dict: 식사 기록 목록과 총 개수
         """
         try:
             query = Meal.query.filter_by(uid=user_id)
@@ -107,3 +87,136 @@ class MealService:
                 'success': False,
                 'error': str(e)
             }
+
+    def get_meal_detail(self, meal_id, user_id):
+        """
+        특정 식사 기록을 조회하는 메서드
+        """
+        try:
+            meal = Meal.query.filter_by(mid=meal_id, uid=user_id).first()
+
+            if not meal:
+                return {"success": False, "error": "해당 식사 기록을 찾을 수 없습니다."}
+
+            # 해당 식사에 포함된 음식 조회
+            foods = Food.query.filter_by(mid=meal.mid).all()
+            food_names = [food.food_name for food in foods]
+
+            return {
+                "success": True,
+                "meal": {
+                    "meal_id": meal.mid,
+                    "meal_time": meal.meal_time,
+                    "content": meal.content,
+                    "foods": food_names,
+                    "created_at": meal.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                }
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def update_meal_record(self, meal_id, user_id, data):
+        """
+        특정 식사 기록을 수정하는 메서드
+        """
+        try:
+            meal = Meal.query.filter_by(mid=meal_id, uid=user_id).first()
+
+            if not meal:
+                return {"success": False, "error": "해당 식사 기록을 찾을 수 없습니다."}
+
+            # 요청 데이터에서 필드 업데이트
+            if "meal_time" in data:
+                meal.meal_time = data["meal_time"]
+            if "content" in data:
+                meal.content = data["content"]
+
+            # 기존 음식 목록 삭제 후 새 음식 추가
+            if "foods" in data:
+                Food.query.filter_by(mid=meal_id).delete()
+                for food_name in data["foods"]:
+                    new_food = Food(mid=meal_id, food_name=food_name)
+                    db.session.add(new_food)
+
+            db.session.commit()  # DB 업데이트 적용
+
+            return {"success": True, "message": "식사 기록이 성공적으로 수정되었습니다."}
+        except Exception as e:
+            db.session.rollback()
+            return {"success": False, "error": str(e)}
+        
+    def delete_meal_record(self, meal_id, user_id):
+        """
+        특정 식사 기록을 삭제하는 메서드
+        """
+        try:
+            meal = Meal.query.filter_by(mid=meal_id, uid=user_id).first()
+
+            if not meal:
+                return {"success": False, "error": "해당 식사 기록을 찾을 수 없습니다."}
+
+            # 해당 식사의 음식 데이터 삭제
+            Food.query.filter_by(mid=meal_id).delete()
+
+            # 식사 기록 삭제
+            db.session.delete(meal)
+            db.session.commit()
+
+            return {"success": True, "message": "식사 기록이 성공적으로 삭제되었습니다."}
+        except Exception as e:
+            db.session.rollback()
+            return {"success": False, "error": str(e)}
+
+    def get_meal_statistics(self, user_id, start_date=None, end_date=None, group_by='day'):
+        """
+        사용자의 식사 통계를 조회하는 메서드
+        """
+        try:
+            query = Meal.query.filter_by(uid=user_id)
+
+            # 날짜 필터링
+            if start_date:
+                query = query.filter(Meal.date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+            if end_date:
+                query = query.filter(Meal.date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+
+            total_meals = query.count()
+            total_calories = 0
+            food_counts = {}
+
+            meals = query.all()
+            for meal in meals:
+                foods = Food.query.filter_by(mid=meal.mid).all()
+                for food in foods:
+                    food_name = food.food_name
+                    food_counts[food_name] = food_counts.get(food_name, 0) + 1
+                    if food.calories:
+                        total_calories += food.calories
+
+            # 그룹화 옵션 처리 (날짜별, 주별, 월별)
+            grouped_stats = {}
+            for meal in meals:
+                if group_by == 'day':
+                    key = meal.date.strftime('%Y-%m-%d')
+                elif group_by == 'week':
+                    key = meal.date.strftime('%Y-%W')  # 주 단위
+                elif group_by == 'month':
+                    key = meal.date.strftime('%Y-%m')  # 월 단위
+                else:
+                    key = 'unknown'
+
+                if key not in grouped_stats:
+                    grouped_stats[key] = {'meals': 0, 'calories': 0}
+
+                grouped_stats[key]['meals'] += 1
+                grouped_stats[key]['calories'] += sum(food.calories for food in foods if food.calories)
+
+            return {
+                "success": True,
+                "total_meals": total_meals,
+                "total_calories": total_calories,
+                "most_frequent_foods": dict(sorted(food_counts.items(), key=lambda x: x[1], reverse=True)[:5]),
+                "grouped_statistics": grouped_stats
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
