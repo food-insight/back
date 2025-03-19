@@ -1,5 +1,6 @@
 import logging
 import re
+import os
 from typing import List, Dict, Any, Optional, Tuple
 from flask import current_app
 from models.user import User
@@ -22,7 +23,14 @@ class RecommendationService:
             rag_service (Optional[RAGService]): RAG 서비스
         """
         self.food_db = food_db or FoodDatabaseService()
-        self.rag_service = rag_service or RAGService()
+
+        # 환경 변수에서 OpenAI API 키 가져오기
+        openai_api_key = os.getenv('OPENAI_API_KEY')
+        if not openai_api_key:
+            raise ValueError("OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.")
+
+        # RAG 서비스 초기화 시 API 키 전달
+        self.rag_service = rag_service or RAGService(openai_api_key=openai_api_key)
 
     def get_similar_foods(self, food_name: str, limit=5):
         """
@@ -496,17 +504,38 @@ def search_recipes(query: str, limit: int = 5) -> List[Dict[str, Any]]:
     Returns:
         List[Dict[str, Any]]: 검색된 레시피 목록
     """
-    service = RecommendationService()
+    # 환경 변수에서 OpenAI API 키 가져오기
+    openai_api_key = os.getenv('OPENAI_API_KEY')
+    if not openai_api_key:
+        raise ValueError("OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.")
+
+    # RAG 서비스를 명시적으로 API 키와 함께 생성
+    rag_service = RAGService(openai_api_key=openai_api_key)
+    service = RecommendationService(rag_service=rag_service)
     return service.get_recipe_recommendations(query=query, limit=limit)
 
 
 # 클래스 외부에 래퍼 함수 정의
 def generate_meal_recommendations(user=None, allergies=None, recent_foods=None):
     """RecommendationService.generate_meal_recommendations의 래퍼 함수"""
-    service = RecommendationService()
+    # 환경 변수에서 OpenAI API 키 가져오기
+    openai_api_key = os.getenv('OPENAI_API_KEY')
+    if not openai_api_key:
+        raise ValueError("OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.")
+
+    # RAG 서비스를 명시적으로 API 키와 함께 생성
+    rag_service = RAGService(openai_api_key=openai_api_key)
+    service = RecommendationService(rag_service=rag_service)
     return service.generate_meal_recommendations(user, allergies or [], recent_foods or [])
 
 def generate_food_alternatives(food_name, health_goal="", allergies=None, limit=3):
     """RecommendationService.generate_food_alternatives의 래퍼 함수"""
-    service = RecommendationService()
+    # 환경 변수에서 OpenAI API 키 가져오기
+    openai_api_key = os.getenv('OPENAI_API_KEY')
+    if not openai_api_key:
+        raise ValueError("OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.")
+
+    # RAG 서비스를 명시적으로 API 키와 함께 생성
+    rag_service = RAGService(openai_api_key=openai_api_key)
+    service = RecommendationService(rag_service=rag_service)
     return service.generate_food_alternatives(food_name, health_goal, allergies or [], limit)

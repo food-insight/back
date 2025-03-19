@@ -24,7 +24,7 @@ class FoodDatabaseService:
 
         # 데이터베이스 초기화
         self._init_database()
-    
+
     def is_initialized(self) -> bool:
         """ 데이터베이스 파일이 존재하는지 확인 """
         return os.path.exists(self.db_path)
@@ -223,6 +223,26 @@ class FoodDatabaseService:
         else:
             return json.dumps([], ensure_ascii=False)
 
+    def _safe_json_loads(self, json_str, default=None):
+        """
+        안전하게 JSON 문자열을 파싱하는 헬퍼 메소드
+
+        Args:
+            json_str: 파싱할 JSON 문자열
+            default: 파싱 실패 시 반환할 기본값
+
+        Returns:
+            파싱된 객체 또는 기본값
+        """
+        if not json_str:
+            return default if default is not None else []
+
+        try:
+            return json.loads(json_str)
+        except (json.JSONDecodeError, TypeError):
+            self.logger.warning(f"JSON 파싱 실패: {json_str[:50]}...")
+            return default if default is not None else []
+
     def get_food_by_name(self, name: str) -> Optional[Dict[str, Any]]:
         """
         이름으로 식품 정보 조회
@@ -243,7 +263,7 @@ class FoodDatabaseService:
 
             if row:
                 food = dict(row)
-                food["tags"] = json.loads(food["tags"]) if food["tags"] else []
+                food["tags"] = self._safe_json_loads(food["tags"])
                 return food
 
             return None
@@ -251,6 +271,84 @@ class FoodDatabaseService:
         except Exception as e:
             self.logger.error(f"식품 조회 오류: {str(e)}")
             return None
+        finally:
+            if conn:
+                conn.close()
+
+    def get_all_foods(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """
+        모든 식품 정보 조회
+
+        Args:
+            limit (int): 반환할 최대 항목 수
+
+        Returns:
+            List[Dict[str, Any]]: 식품 정보 목록
+        """
+        try:
+            conn = sqlite3.connect(self.db_path)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            cursor.execute("SELECT * FROM foods LIMIT ?", (limit,))
+            rows = cursor.fetchall()
+
+            foods = []
+            for row in rows:
+                food = dict(row)
+                food["tags"] = self._safe_json_loads(food["tags"])
+                foods.append(food)
+
+            return foods
+
+        except Exception as e:
+            self.logger.error(f"모든 식품 조회 오류: {str(e)}")
+            return []
+        finally:
+            if conn:
+                conn.close()
+
+    def get_similar_foods(self, food_name: str, category: Optional[str] = None, limit: int = 5) -> List[Dict[str, Any]]:
+        """
+        유사한 식품 검색
+
+        Args:
+            food_name (str): 기준 식품 이름
+            category (Optional[str]): 카테고리
+            limit (int): 최대 결과 수
+
+        Returns:
+            List[Dict[str, Any]]: 유사 식품 목록
+        """
+        try:
+            conn = sqlite3.connect(self.db_path)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            query = "SELECT * FROM foods WHERE name != ?"
+            params = [food_name]
+
+            if category:
+                query += " AND category = ?"
+                params.append(category)
+
+            query += " LIMIT ?"
+            params.append(limit)
+
+            cursor.execute(query, params)
+            rows = cursor.fetchall()
+
+            similar_foods = []
+            for row in rows:
+                food = dict(row)
+                food["tags"] = self._safe_json_loads(food["tags"])
+                similar_foods.append(food)
+
+            return similar_foods
+
+        except Exception as e:
+            self.logger.error(f"유사 식품 검색 오류: {str(e)}")
+            return []
         finally:
             if conn:
                 conn.close()
@@ -282,7 +380,7 @@ class FoodDatabaseService:
             foods = []
             for row in rows:
                 food = dict(row)
-                food["tags"] = json.loads(food["tags"]) if food["tags"] else []
+                food["tags"] = self._safe_json_loads(food["tags"])
                 foods.append(food)
 
             return foods
