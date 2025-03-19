@@ -33,7 +33,7 @@ def recognize_food():
             # 여기서 실제 음식 인식 로직을 호출 (예: recognition_service.recognize_food_from_image(image_data))
             # 현재는 더미 데이터를 반환하도록 구현
             result = {
-                "foods": ["김치찌개", "밥"],
+                "foods": ["치킨", "닭가슴살살"],
                 "confidence": 0.92
             }
             return jsonify(result)
@@ -48,7 +48,7 @@ def recognize_food():
             # 실제 텍스트 기반 음식 인식 로직 호출 (예: recognition_service.recognize_food_from_text(text))
             # 더미 데이터 반환
             result = {
-                "foods": ["김치찌개"],
+                "foods": ["치킨"],
                 "source": "text"
             }
             return jsonify(result)
