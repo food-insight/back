@@ -56,7 +56,7 @@ class User(db.Model):
             'name': self.name,
             'gender': self.gender,
             'birth': self.birth.strftime('%Y-%m-%d') if self.birth else None,
-            'allergies': self.allergies,
+            "allergies": self.allergies.split(",") if self.allergies else [],
             'health_goal': self.health_goal,
             'age': self.calculate_age(),
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
