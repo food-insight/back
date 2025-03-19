@@ -34,15 +34,27 @@ def register():
     if existing_user:
         return error_response('이미 등록된 이메일입니다.', 409)
 
-    # 사용자 생성
     try:
+        # 생년월일 변환 (문자열 → Date 객체)
+        birth_date = None
+        if 'birth' in data and data['birth']:
+            try:
+                birth_date = datetime.strptime(data['birth'], "%Y-%m-%d").date()
+            except ValueError:
+                return error_response("생년월일 형식이 올바르지 않습니다. YYYY-MM-DD 형식이어야 합니다.", 400)
+
+        # allergies 리스트 → 쉼표로 구분된 문자열 변환
+        allergies_str = ",".join(data.get('allergies', [])) if isinstance(data.get('allergies'), list) else ""
+
+
+    # 사용자 생성
         user = User(
             email=data['email'],
             password=data['password'],
             name=data['name'],
             gender=data.get('gender'),
-            birth=data.get('birth'),
-            allergies=data.get('allergies'),
+            birth=birth_date,
+            allergies=allergies_str,
             health_goal=data.get('health_goal')
         )
         db.session.add(user)
