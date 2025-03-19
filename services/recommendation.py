@@ -276,6 +276,52 @@ class RecommendationService:
                 "variety_based": []
             }
 
+    def generate_food_alternatives(self, food_name: str, health_goal: str = "", allergies: List[str] = [], limit: int = 3) -> List[Dict[str, Any]]:
+        """
+        식품 대체제 추천
+
+        Args:
+            food_name (str): 기준 식품 이름
+            health_goal (str): 건강 목표
+            allergies (List[str]): 알레르기 정보
+            limit (int): 추천 개수
+
+        Returns:
+            List[Dict[str, Any]]: 추천 식품 목록
+        """
+        try:
+            logger.info(f"식품 대체제 추천 시작: {food_name}")
+
+            # 쿼리 구성
+            query = f"{food_name}의 건강한 대체 식품"
+
+            if health_goal:
+                query += f", 건강 목표: {health_goal}"
+
+            if allergies:
+                query += f", 알레르기 제외: {', '.join(allergies)}"
+
+            # RAG 활용 대체 식품 추천
+            rag_result = self.rag_service.query_food_info(query)
+            alternatives = self._parse_rag_recommendations(rag_result)
+
+            # 데이터베이스에서 추가 정보 보강
+            for alt in alternatives:
+                alt_name = alt.get("name", "")
+                food_info = self.food_db.get_food_by_name(alt_name)
+                if food_info:
+                    alt["details"] = food_info
+                    alt["source"] = "database"
+                else:
+                    alt["source"] = "rag"
+
+            logger.info(f"식품 대체제 추천 완료: {len(alternatives)}개 추천됨")
+            return alternatives[:limit]
+
+        except Exception as e:
+            logger.error(f"식품 대체제 추천 중 오류 발생: {str(e)}")
+            return []
+
     def _parse_rag_recommendations(self, rag_result):
         """RAG 결과에서 추천 식품 목록 추출"""
         try:
@@ -438,16 +484,29 @@ class RecommendationService:
             logger.error(f"레시피 파싱 중 오류: {str(e)}")
             return []
 
-def search_recipes(recommendation_service, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+
+def search_recipes(query: str, limit: int = 5) -> List[Dict[str, Any]]:
     """
     독립적인 레시피 검색 함수
 
     Args:
-        recommendation_service (RecommendationService): 추천 서비스 인스턴스
         query (str): 검색어
         limit (int, optional): 반환할 최대 레시피 수. 기본값은 5.
 
     Returns:
         List[Dict[str, Any]]: 검색된 레시피 목록
     """
-    return recommendation_service.get_recipe_recommendations(query=query, limit=limit)
+    service = RecommendationService()
+    return service.get_recipe_recommendations(query=query, limit=limit)
+
+
+# 클래스 외부에 래퍼 함수 정의
+def generate_meal_recommendations(user=None, allergies=None, recent_foods=None):
+    """RecommendationService.generate_meal_recommendations의 래퍼 함수"""
+    service = RecommendationService()
+    return service.generate_meal_recommendations(user, allergies or [], recent_foods or [])
+
+def generate_food_alternatives(food_name, health_goal="", allergies=None, limit=3):
+    """RecommendationService.generate_food_alternatives의 래퍼 함수"""
+    service = RecommendationService()
+    return service.generate_food_alternatives(food_name, health_goal, allergies or [], limit)

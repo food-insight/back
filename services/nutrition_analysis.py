@@ -486,3 +486,15 @@ class NutritionAnalysisService:
                 nutrients[nutrient] = value
 
         return nutrients
+
+
+# 클래스 외부에 래퍼 함수 정의
+def analyze_meal_nutrition(food_names):
+    """NutritionAnalysisService.analyze_meal_nutrition의 래퍼 함수"""
+    service = NutritionAnalysisService()
+    return service.analyze_meal_nutrition(food_names)
+
+def get_nutrition_insights(nutrition_data, user=None, is_average=False):
+    """NutritionAnalysisService.get_nutrition_insights의 래퍼 함수"""
+    service = NutritionAnalysisService()
+    return service.get_nutrition_insights(nutrition_data, user, is_average)

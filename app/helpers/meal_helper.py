@@ -1,110 +1,137 @@
-from flask import current_app
-from werkzeug.utils import secure_filename
 import os
 import uuid
+import logging
 from datetime import datetime
-from services.food_recognition import recognize_food_from_image
-from utils.image_processing import process_image, is_allowed_image
+from werkzeug.utils import secure_filename
+from flask import current_app
+from services import service_manager
 
-def save_meal_image(image_file):
-    """식사 이미지 저장 헬퍼 함수"""
-    if not image_file or not image_file.filename:
-        return None
+logger = logging.getLogger(__name__)
 
-    # 파일 형식 검증
-    if not is_allowed_image(image_file.filename):
-        raise ValueError('허용되지 않은 파일 형식입니다.')
-
-    # 파일명 생성
-    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-    filename = secure_filename(f"meal_{timestamp}_{uuid.uuid4()}.{image_file.filename.rsplit('.', 1)[1].lower()}")
-
-    # 저장 경로
-    image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'meals', filename)
-    os.makedirs(os.path.dirname(image_path), exist_ok=True)
-
-    # 파일 저장
-    image_file.save(image_path)
-
-    return image_path
-
-def process_meal_image(image_path):
-    """식사 이미지 처리 헬퍼 함수"""
-    if not image_path or not os.path.exists(image_path):
-        return None, []
-
+def save_meal_image(image_file, user_id=None):
+    """식사 이미지 저장 함수"""
     try:
-        # 이미지 처리 (리사이징, 품질 개선 등)
-        processed_image_path = process_image(image_path)
+        # 파일 이름 안전하게 저장
+        original_filename = secure_filename(image_file.filename)
 
-        # 음식 인식
-        recognized_foods = recognize_food_from_image(processed_image_path)
+        # 파일 확장자 추출
+        _, file_extension = os.path.splitext(original_filename)
 
-        return processed_image_path, recognized_foods
+        # 고유한 파일 이름 생성
+        unique_filename = f"{user_id}_{uuid.uuid4().hex}{file_extension}" if user_id else f"{uuid.uuid4().hex}{file_extension}"
+
+        # 업로드 경로 생성
+        upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'meals')
+        os.makedirs(upload_dir, exist_ok=True)
+
+        # 파일 저장 경로
+        file_path = os.path.join(upload_dir, unique_filename)
+
+        # 파일 저장
+        image_file.save(file_path)
+
+        # 상대 경로 반환 (API에서 접근 가능한 URL)
+        relative_path = os.path.join('uploads', 'meals', unique_filename)
+
+        logger.info(f"이미지 저장 성공: {relative_path}")
+
+        return {
+            'success': True,
+            'file_path': file_path,
+            'relative_path': relative_path
+        }
+
     except Exception as e:
-        current_app.logger.error(f"식사 이미지 처리 오류: {str(e)}")
-        return image_path, []
+        logger.error(f"이미지 저장 중 오류 발생: {str(e)}")
+        return {'success': False, 'error': str(e)}
 
-def extract_meal_data_from_text(text):
-    """텍스트에서 식사 정보 추출 헬퍼 함수"""
-    if not text:
-        return None
-
-    # 간단한 규칙 기반 파싱 (실제 구현은 더 복잡할 수 있음)
-    meal_data = {
-        'food_names': [],
-        'meal_time': '기타',
-        'content': text
-    }
-
-    # 식사 시간 인식
-    if '아침' in text or '브런치' in text:
-        meal_data['meal_time'] = '아침'
-    elif '점심' in text or '런치' in text:
-        meal_data['meal_time'] = '점심'
-    elif '저녁' in text or '디너' in text:
-        meal_data['meal_time'] = '저녁'
-    elif '간식' in text or '스낵' in text:
-        meal_data['meal_time'] = '간식'
-
-    # 음식 이름 추출 (키워드 기반 단순 추출 - 실제로는 NLP 기법 활용)
-    from services.food_recognition import extract_food_names_from_text
-    meal_data['food_names'] = extract_food_names_from_text(text)
-
-    return meal_data
-
-def calculate_meal_calories(food_names):
-    """식사 칼로리 계산 헬퍼 함수"""
-    if not food_names:
-        return 0
-
+def process_meal_image(image_file, user_id=None):
+    """식사 이미지 처리 함수"""
     try:
-        from services.nutrition_analysis import analyze_meal_nutrition
-        nutrition_data = analyze_meal_nutrition(food_names)
-        return nutrition_data.get('calories', 0)
+        # 이미지 저장
+        save_result = save_meal_image(image_file, user_id)
+
+        if not save_result['success']:
+            return {'success': False, 'error': save_result['error']}
+
+        # 음식 인식 서비스 호출
+        recognition_service = service_manager.get_service('recognition')
+        recognition_result = recognition_service.process_food_image(save_result['file_path'])
+
+        # 인식 결과와 이미지 경로 반환
+        return {
+            'success': True,
+            'foods': recognition_result[0],  # 인식된 음식 목록
+            'processed_image': recognition_result[1],  # 처리된 이미지 경로 (있을 경우)
+            'original_image': save_result['relative_path']  # 원본 이미지 상대 경로
+        }
+
     except Exception as e:
-        current_app.logger.error(f"칼로리 계산 오류: {str(e)}")
-        return 0
+        logger.error(f"식사 이미지 처리 중 오류 발생: {str(e)}")
+        return {'success': False, 'error': str(e)}
 
-def generate_meal_summary(meal, nutrition_data=None):
-    """식사 요약 생성 헬퍼 함수"""
-    if not meal:
-        return ''
-
-    foods = []
+def create_meal_record(user_id, meal_data):
+    """식사 기록 생성 함수"""
     try:
-        from models.food import Food
-        foods = Food.query.filter_by(mid=meal.mid).all()
+        # 현재 시간
+        now = datetime.now()
+
+        # 기본 식사 기록 정보
+        meal_record = {
+            'user_id': user_id,
+            'datetime': now.isoformat(),
+            'meal_type': meal_data.get('meal_type', '기타'),
+            'foods': meal_data.get('foods', []),
+            'notes': meal_data.get('notes', ''),
+            'images': meal_data.get('images', [])
+        }
+
+        # 영양 정보 계산
+        nutrition_info = calculate_meal_nutrition(meal_record['foods'])
+        meal_record['nutrition'] = nutrition_info
+
+        # 데이터베이스에 저장 (서비스 사용)
+        meal_service = service_manager.get_service('meal')
+        result = meal_service.add_meal_record(meal_record)
+
+        return {'success': True, 'meal_id': result['meal_id']}
+
     except Exception as e:
-        current_app.logger.error(f"식사 음식 조회 오류: {str(e)}")
+        logger.error(f"식사 기록 생성 중 오류 발생: {str(e)}")
+        return {'success': False, 'error': str(e)}
 
-    food_names = [food.food_name for food in foods]
-    food_text = ', '.join(food_names) if food_names else '기록된 음식 없음'
+def calculate_meal_nutrition(foods):
+    """식사의 영양 정보 계산 함수"""
+    try:
+        # 초기 영양 정보
+        nutrition = {
+            'calories': 0,
+            'carbs': 0,
+            'protein': 0,
+            'fat': 0,
+            'sodium': 0,
+            'sugar': 0,
+            'fiber': 0
+        }
 
-    calories = ''
-    if nutrition_data and 'calories' in nutrition_data:
-        calories = f" (약 {nutrition_data['calories']}kcal)"
+        # 영양 서비스 가져오기
+        nutrition_service = service_manager.get_service('nutrition')
 
-    summary = f"{meal.date.strftime('%Y년 %m월 %d일')} {meal.meal_time}: {food_text}{calories}"
+        # 각 음식별 영양 정보 합산
+        for food in foods:
+            food_name = food.get('name', '')
+            quantity = food.get('quantity', 100)
+            unit = food.get('unit', 'g')
 
-    return summary
+            # 음식 영양 정보 조회
+            food_nutrition = nutrition_service.analyze_food_nutrients(food_name, quantity, unit)
+
+            # 합산
+            for key in nutrition:
+                nutrition[key] += food_nutrition.get(key, 0)
+
+        return nutrition
+
+    except Exception as e:
+        logger.error(f"식사 영양 정보 계산 중 오류 발생: {str(e)}")
+        return {}

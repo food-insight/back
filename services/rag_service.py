@@ -229,3 +229,130 @@ class RAGService:
                 "query": query,
                 "timestamp": datetime.now().isoformat()
             }
+
+    def query_food_info(self, query: str) -> str:
+        """식품 정보 쿼리
+
+        Args:
+            query (str): 쿼리 문자열
+
+        Returns:
+            str: 응답 문자열
+        """
+        try:
+            result = self.get_nutrition_insights(query)
+            return result.get("answer", "정보를 찾을 수 없습니다.")
+        except Exception as e:
+            self.logger.error(f"식품 정보 쿼리 오류: {str(e)}")
+            return "정보를 찾을 수 없습니다."
+
+    def get_recipe_recommendations(self, query: str, limit: int = 3) -> Dict[str, Any]:
+        """
+        레시피 추천 생성
+
+        Args:
+            query (str): 쿼리 문자열
+            limit (int): 반환할 최대 레시피 수
+
+        Returns:
+            Dict[str, Any]: 레시피 추천 결과
+        """
+        try:
+            self.logger.info(f"레시피 추천 시작: {query}")
+
+            # 레시피 관련 쿼리 구성
+            recipe_query = f"다음 조건에 맞는 레시피 {limit}개 추천: {query}"
+
+            # RAG 활용하여 레시피 추천
+            result = self.get_nutrition_insights(recipe_query)
+
+            return {
+                "recipes": result.get("answer", "레시피를 찾을 수 없습니다."),
+                "query": query,
+                "timestamp": datetime.now().isoformat()
+            }
+
+        except Exception as e:
+            self.logger.error(f"레시피 추천 오류: {str(e)}")
+            return {
+                "recipes": "레시피를 추천할 수 없습니다.",
+                "error": str(e),
+                "query": query,
+                "timestamp": datetime.now().isoformat()
+            }
+
+    def extract_food_entities(self, text: str) -> List[str]:
+        """
+        텍스트에서 음식 관련 엔티티 추출
+
+        Args:
+            text (str): 텍스트
+
+        Returns:
+            List[str]: 추출된 음식 엔티티 목록
+        """
+        try:
+            self.logger.info(f"텍스트에서 음식 엔티티 추출 시작")
+
+            # RAG 체인을 사용하여 엔티티 추출
+            prompt = f"""
+다음 텍스트에서 모든 음식 이름을 추출하세요. 
+음식 이름만 쉼표로 구분하여 나열해주세요. 
+다른 설명은 포함하지 말고 음식 이름만 반환하세요.
+
+텍스트: {text}
+"""
+
+            llm = ChatOpenAI(
+                openai_api_key=self.openai_api_key,
+                model_name=self.model_name,
+                temperature=0.1
+            )
+
+            result = llm.predict(prompt)
+
+            # 결과 파싱 - 쉼표로 구분된 음식 이름 목록
+            food_entities = [food.strip() for food in result.split(',') if food.strip()]
+
+            self.logger.info(f"텍스트에서 {len(food_entities)}개 음식 엔티티 추출 완료")
+            return food_entities
+
+        except Exception as e:
+            self.logger.error(f"텍스트에서 음식 엔티티 추출 오류: {str(e)}")
+            return []
+
+
+# 클래스 외부에 래퍼 함수 정의
+def get_nutritional_research(query: str, top_k: int = 3) -> Dict[str, Any]:
+    """RAGService.get_nutrition_insights의 래퍼 함수"""
+    from dotenv import load_dotenv
+    import os
+
+    # 환경 변수 로드
+    load_dotenv()
+
+    # OpenAI API 키 가져오기
+    openai_api_key = os.getenv("OPENAI_API_KEY")
+
+    if not openai_api_key:
+        raise ValueError("OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.")
+
+    service = RAGService(openai_api_key=openai_api_key)
+    return service.get_nutrition_insights(query, top_k)
+
+def get_recipe_recommendations(query: str, limit: int = 3) -> Dict[str, Any]:
+    """RAGService.get_recipe_recommendations의 래퍼 함수"""
+    from dotenv import load_dotenv
+    import os
+
+    # 환경 변수 로드
+    load_dotenv()
+
+    # OpenAI API 키 가져오기
+    openai_api_key = os.getenv("OPENAI_API_KEY")
+
+    if not openai_api_key:
+        raise ValueError("OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.")
+
+    service = RAGService(openai_api_key=openai_api_key)
+    return service.get_recipe_recommendations(query, limit)

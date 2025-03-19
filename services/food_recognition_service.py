@@ -7,6 +7,7 @@ import random
 from werkzeug.utils import secure_filename
 from services.food_database import FoodDatabaseService
 from services.rag_service import RAGService
+from dotenv import load_dotenv
 
 
 class FoodRecognitionService:
@@ -22,8 +23,16 @@ class FoodRecognitionService:
             rag_service (Optional[RAGService]): RAG 서비스
         """
         self.logger = logging.getLogger(__name__)
+
+        # 환경 변수 로드
+        load_dotenv()
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        if not openai_api_key:
+            self.logger.error("OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.")
+            raise ValueError("OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.")
+
         self.food_db = food_db or FoodDatabaseService()
-        self.rag_service = rag_service or RAGService()
+        self.rag_service = rag_service or RAGService(openai_api_key=openai_api_key)
 
         # 샘플 음식 데이터 (모델이 실제로 구현되기 전까지 사용)
         # 실제 구현에서는 ML 모델을 통해 이미지 인식 수행
@@ -266,4 +275,3 @@ class FoodRecognitionService:
                 "details": {"description": f"{food_name}에 대한 정보를 찾을 수 없습니다."},
                 "source": "error"
             }
-

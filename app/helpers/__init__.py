@@ -1,20 +1,22 @@
-import os
-from app import create_app
-from dotenv import load_dotenv
+# 이 파일은 순환 참조를 방지하기 위해 app을 여기서 생성하지 않습니다
+# 기존의 app = create_app(config_name) 코드를 제거합니다
 
-# .env 파일 로드
-load_dotenv()
+# 유틸리티 함수나 필요한 공통 요소만 정의합니다
+import logging
 
-# 환경 변수에서 설정 가져오기 (기본값: development)
-config_name = os.getenv('FLASK_CONFIG', 'development')
+# 로깅 설정
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
-# 애플리케이션 생성
-app = create_app(config_name)
-
-if __name__ == '__main__':
-    # 애플리케이션 실행
-    app.run(
-        host=os.getenv('FLASK_HOST', '0.0.0.0'),
-        port=int(os.getenv('FLASK_PORT', 5000)),
-        debug=(config_name == 'development')
-    )
+# 기타 필요한 헬퍼 함수들
+def format_response(data, message=None, success=True):
+    """API 응답 형식화"""
+    response = {
+        "success": success,
+        "data": data
+    }
+    if message:
+        response["message"] = message
+    return response
