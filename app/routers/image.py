@@ -7,13 +7,14 @@ from utils.responses import success_response, error_response
 from utils.image_processing import is_allowed_image, save_image, process_image
 import os
 import uuid
+from models.meal import Meal 
 
 image_bp = Blueprint('image', __name__)
 
 @image_bp.route('/upload', methods=['POST'])
 @jwt_required()
 def upload_image():
-    """이미지 업로드 API"""
+    """이미지 업로드 API (식사 기록과 연결)"""
     current_user_id = get_jwt_identity()
 
     # 이미지 파일 확인
@@ -23,6 +24,11 @@ def upload_image():
     image_file = request.files['image']
     if not image_file.filename:
         return error_response('이미지 파일이 선택되지 않았습니다.', 400)
+
+    # meal_id 확인
+    meal_id = request.form.get('meal_id')
+    if not meal_id:
+        return error_response('meal_id가 필요합니다.', 400)
 
     # 파일 확장자 검증
     if not is_allowed_image(image_file.filename):
@@ -35,18 +41,40 @@ def upload_image():
         os.makedirs(os.path.dirname(image_path), exist_ok=True)
         image_file.save(image_path)
 
-        # 이미지 경로 반환
+        # API에서 접근할 수 있는 이미지 URL 생성
         image_url = f"/api/images/view/{filename}"
+
+        # 디버깅 로그 추가
+        current_app.logger.info(f"meal_id: {meal_id}, user_id: {current_user_id}")
+
+        # 식사 기록에 이미지 경로 저장
+        meal = Meal.query.filter_by(mid=meal_id, uid=current_user_id).first()
+        if not meal:
+            return error_response("해당 식사 기록을 찾을 수 없습니다.", 404)
+
+        # `image_path`에 파일 이름만 저장
+        meal.image_path = filename
+
+        db.session.flush()  # 변경 사항 강제 적용
+        db.session.commit()  # 변경 사항 저장
+
+        # 디버깅 로그 추가
+        current_app.logger.info(f"Meal ID {meal_id}의 image_path가 업데이트됨: {meal.image_path}")
 
         return success_response({
             'message': '이미지가 성공적으로 업로드되었습니다.',
-            'image_path': image_path,
+            'image_path': meal.image_path,
             'image_url': image_url,
             'filename': filename
         }, 201)
     except Exception as e:
+        db.session.rollback()
         current_app.logger.error(f"이미지 업로드 오류: {str(e)}")
         return error_response(f'이미지 업로드 실패: {str(e)}', 500)
+
+
+
+
 
 @image_bp.route('/view/<filename>', methods=['GET'])
 def view_image(filename):

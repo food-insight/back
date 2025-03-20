@@ -109,6 +109,7 @@ class MealService:
                     "meal_time": meal.meal_time,
                     "content": meal.content,
                     "foods": food_names,
+                    "image_path": meal.image_path if meal.image_path else None,
                     "created_at": meal.created_at.strftime('%Y-%m-%d %H:%M:%S')
                 }
             }
