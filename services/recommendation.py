@@ -463,85 +463,28 @@ class RecommendationService:
             logger.error(f"식단 조합 파싱 중 오류: {str(e)}")
             return []
 
-    def _parse_recipes(self, rag_result):
+    def _parse_recipes(self, recipes_json):
         """RAG 결과에서 레시피 정보 추출"""
         try:
-            lines = rag_result.split("\n")
             recipes = []
-            current_recipe = None
-            current_section = None
+            for recipe in recipes_json["recipes"]:
+                name = recipe.get("음식명", "이름 없음")
+                ingredients = recipe.get("재료", [])
+                instructions = recipe.get("조리법", "조리법 정보 없음")  # RAG 모델이 제공하는 조리법 사용
 
-            for line in lines:
-                line = line.strip()
-                if not line:
-                    continue
-
-                # 새 레시피 시작
-                if line.startswith("레시피") or line.startswith("1.") or line.startswith("2.") or line.startswith("3."):
-                    if current_recipe:
-                        recipes.append(current_recipe)
-
-                    title = line.split(":", 1)[-1].strip() if ":" in line else line
-                    current_recipe = {
-                        "title": title,
-                        "ingredients": [],
-                        "instructions": "",
-                        "nutrition": {},
-                        "reason": ""
-                    }
-                    current_section = None
-
-                # 섹션 식별
-                elif line.lower().startswith("재료") or line.lower().startswith("ingredients"):
-                    current_section = "ingredients"
-                elif line.lower().startswith("조리법") or line.lower().startswith("instructions") or line.lower().startswith("만드는 방법"):
-                    current_section = "instructions"
-                elif line.lower().startswith("영양정보") or line.lower().startswith("nutrition"):
-                    current_section = "nutrition"
-                elif line.lower().startswith("추천이유") or line.lower().startswith("reason"):
-                    current_section = "reason"
-
-                # 섹션 내용 추가
-                elif current_recipe and current_section:
-                    if current_section == "ingredients" and (":" in line or "-" in line or "•" in line):
-                        delimiter = ":" if ":" in line else "-" if "-" in line else "•"
-                        ingredient = line.split(delimiter, 1)[-1].strip()
-                        if ingredient:
-                            current_recipe["ingredients"].append(ingredient)
-                    elif current_section == "instructions":
-                        if current_recipe["instructions"]:
-                            current_recipe["instructions"] += "\n"
-                        current_recipe["instructions"] += line
-                    elif current_section == "nutrition" and ":" in line:
-                        key, value = line.split(":", 1)
-                        key = key.strip().lower()
-                        value_str = value.strip()
-
-                        # 숫자 추출
-                        num_match = re.search(r'\d+', value_str)
-                        if num_match:
-                            num_value = int(num_match.group())
-                            if "칼로리" in key or "calories" in key:
-                                current_recipe["nutrition"]["calories"] = num_value
-                            elif "단백질" in key or "protein" in key:
-                                current_recipe["nutrition"]["protein"] = num_value
-                            elif "탄수화물" in key or "carbs" in key:
-                                current_recipe["nutrition"]["carbs"] = num_value
-                            elif "지방" in key or "fat" in key:
-                                current_recipe["nutrition"]["fat"] = num_value
-                    elif current_section == "reason":
-                        if current_recipe["reason"]:
-                            current_recipe["reason"] += " "
-                        current_recipe["reason"] += line
-
-            # 마지막 레시피 추가
-            if current_recipe and current_recipe not in recipes:
-                recipes.append(current_recipe)
+                # 데이터 구조 확인 후 저장
+                recipes.append({
+                    "title": name,
+                    "ingredients": ingredients,
+                    "instructions": instructions
+                })
 
             return recipes
         except Exception as e:
             logger.error(f"레시피 파싱 중 오류: {str(e)}")
             return []
+
+
 
 
 def search_recipes(query: str, limit: int = 5) -> List[Dict[str, Any]]:

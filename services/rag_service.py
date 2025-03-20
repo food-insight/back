@@ -246,40 +246,26 @@ class RAGService:
             self.logger.error(f"식품 정보 쿼리 오류: {str(e)}")
             return "정보를 찾을 수 없습니다."
 
-    def get_recipe_recommendations(self, query: str, limit: int = 3) -> Dict[str, Any]:
+    def get_recipe_recommendations(self, query: str, limit: int = 3):
         """
-        레시피 추천 생성
-
-        Args:
-            query (str): 쿼리 문자열
-            limit (int): 반환할 최대 레시피 수
-
-        Returns:
-            Dict[str, Any]: 레시피 추천 결과
+        레시피 추천을 위한 RAG 쿼리 실행
         """
         try:
-            self.logger.info(f"레시피 추천 시작: {query}")
+            self.logger.info(f"레시피 추천 RAG 쿼리 실행: {query}")
 
-            # 레시피 관련 쿼리 구성
-            recipe_query = f"다음 조건에 맞는 레시피 {limit}개 추천: {query}"
+            # RAG 모델을 이용한 레시피 검색
+            result = self.query_food_info(query)
 
-            # RAG 활용하여 레시피 추천
-            result = self.get_nutrition_insights(recipe_query)
+            self.logger.info(f"레시피 추천 결과: {result}")
 
-            return {
-                "recipes": result.get("answer", "레시피를 찾을 수 없습니다."),
-                "query": query,
-                "timestamp": datetime.now().isoformat()
-            }
+            if not result or "레시피를 찾을 수 없습니다" in result:
+                return {"message": "적절한 레시피를 찾지 못했습니다.", "recipes": []}
 
+            return {"recipes": result}
         except Exception as e:
-            self.logger.error(f"레시피 추천 오류: {str(e)}")
-            return {
-                "recipes": "레시피를 추천할 수 없습니다.",
-                "error": str(e),
-                "query": query,
-                "timestamp": datetime.now().isoformat()
-            }
+            self.logger.error(f"레시피 추천 중 오류 발생: {str(e)}")
+            return {"message": "레시피 추천 실패", "error": str(e)}
+
 
     def extract_food_entities(self, text: str) -> List[str]:
         """
