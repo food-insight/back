@@ -6,12 +6,21 @@ from models.food import Food
 from models.user import User
 from models.recommendation import Recommendation
 from models.allergy import Allergy
-from services.recommendation import generate_meal_recommendations, generate_food_alternatives
-from services.rag_service import get_recipe_recommendations
+from services.recommendation import RecommendationService
+from services.rag_service import RAGService
+from services.recommendation import generate_food_alternatives, generate_meal_recommendations
 from utils.responses import success_response, error_response
 from datetime import datetime, timedelta
+import os
+import json
+from models.recipe import Recipe
 
 recommendation_bp = Blueprint('recommendation', __name__)
+
+# RAGService 인스턴스 생성
+openai_api_key = os.getenv("OPENAI_API_KEY")
+rag_service = RAGService(openai_api_key=openai_api_key)
+recommendation_service = RecommendationService(rag_service=rag_service)
 
 @recommendation_bp.route('/meal', methods=['GET'])
 @jwt_required()
@@ -122,45 +131,82 @@ def get_food_alternatives():
         current_app.logger.error(f"대체 음식 추천 오류: {str(e)}")
         return error_response(f'대체 음식 추천 실패: {str(e)}', 500)
 
+def save_recipe_to_db(title, ingredients, instructions):
+    """레시피를 데이터베이스에 저장"""
+    try:
+        # 기존 레시피가 있는지 확인
+        existing_recipe = Recipe.query.filter_by(title=title).first()
+        if existing_recipe:
+            return existing_recipe.to_dict()  # 기존 레시피 반환
+
+        # 새 레시피 저장
+        new_recipe = Recipe(
+            title=title,
+            ingredients=", ".join(ingredients),  # 리스트를 문자열로 변환
+            instructions=instructions
+        )
+        db.session.add(new_recipe)
+        db.session.commit()
+
+        return new_recipe.to_dict()  # 저장된 레시피 반환
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"레시피 저장 오류: {str(e)}")
+        return None
+
 @recommendation_bp.route('/recipes', methods=['GET'])
 @jwt_required()
 def get_recipes():
     """레시피 추천 API"""
     current_user_id = get_jwt_identity()
 
-    # 쿼리 파라미터
+    # 쿼리 파라미터 가져오기
     ingredients = request.args.get('ingredients', '')
     meal_type = request.args.get('meal_type', '')
     health_goal = request.args.get('health_goal', '')
 
-    # 사용자 건강 목표가 지정되지 않았으면 사용자 프로필에서 가져오기
-    if not health_goal:
-        user = User.query.filter_by(uid=current_user_id).first()
-        if user and user.health_goal:
-            health_goal = user.health_goal
-
-    # 사용자 알레르기 정보
-    allergies = Allergy.query.filter_by(uid=current_user_id).all()
-    allergy_list = [allergy.allergy_name for allergy in allergies]
-
     try:
-        # RAG 서비스를 통한 레시피 추천
-        recipes = get_recipe_recommendations(
-            ingredients=ingredients.split(',') if ingredients else [],
-            meal_type=meal_type,
-            health_goal=health_goal,
-            allergies=allergy_list
-        )
+        # 디버깅 로그 추가
+        current_app.logger.info(f"레시피 추천 요청: user_id={current_user_id}, ingredients={ingredients}, meal_type={meal_type}, health_goal={health_goal}")
+
+        # RAG 모델에 전달할 쿼리
+        query = f"재료: {ingredients}, 식사 유형: {meal_type}, 건강 목표: {health_goal}. " \
+                f"각 레시피는 '음식명', '재료', '조리법'을 JSON 형식으로 제공해주세요."
+
+        # RAGService를 통해 레시피 추천
+        raw_response = rag_service.get_recipe_recommendations(query=query, limit=5)
+        current_app.logger.info(f"RAG 모델 원본 응답: {raw_response}")
+
+        # JSON 문자열을 실제 JSON 데이터로 변환
+        try:
+            recipes_json = json.loads(raw_response["recipes"])
+            if isinstance(recipes_json, dict):  # ✅ 단일 레시피 객체라면 리스트로 변환
+                recipes_json = {"recipes": [recipes_json]}
+        except json.JSONDecodeError as e:
+            current_app.logger.error(f"JSON 변환 오류: {str(e)}")
+            recipes_json = {"recipes": []}
+
+        # `_parse_recipes()`를 활용하여 데이터 정제
+        parsed_recipes = recommendation_service._parse_recipes(recipes_json)
+
+        # DB에 저장
+        saved_recipes = []
+        for recipe in parsed_recipes:
+            saved_recipe = save_recipe_to_db(recipe["title"], recipe["ingredients"], recipe["instructions"])
+            if saved_recipe:
+                saved_recipes.append(saved_recipe)
 
         return success_response({
             'ingredients': ingredients,
             'meal_type': meal_type,
             'health_goal': health_goal,
-            'recipes': recipes
+            'recipes': saved_recipes  # DB에 저장된 레시피 반환
         })
     except Exception as e:
         current_app.logger.error(f"레시피 추천 오류: {str(e)}")
         return error_response(f'레시피 추천 실패: {str(e)}', 500)
+
+
 
 @recommendation_bp.route('/history', methods=['GET'])
 @jwt_required()
