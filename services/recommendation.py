@@ -59,7 +59,7 @@ class RecommendationService:
                 {"name": "흰살생선", "reason": "저지방 단백질 식품으로 대체 가능"},
                 {"name": "두부", "reason": "식물성 단백질로서 부드러운 질감"},
                 {"name": "콩고기", "reason": "채식 대체 식품으로 활용 가능"},
-                {"name": "오리고기", "reason": "풍미가 깊어 대체로 추천됨"}
+                {"name": "오리고기", "reason": "부드럽고 쫄깃한 살코기의 식감이 풍부한 맛이 일품"}
             ]
             return {
                 "reference_food": food_name,
