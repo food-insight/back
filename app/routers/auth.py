@@ -108,6 +108,7 @@ def login():
     response.headers['Authorization'] = f'Bearer {access_token}'
     response.headers['Refresh-Token'] = refresh_token
 
+    response.headers['Access-Control-Expose-Headers'] = 'Authorization, Refresh-Token'
     return response
 
 @auth_bp.route('/refresh', methods=['POST'])
