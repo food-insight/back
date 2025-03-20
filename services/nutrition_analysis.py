@@ -5,7 +5,7 @@ from models.user import User
 from services.food_database import FoodDatabaseService
 from services.rag_service import RAGService
 
-# 로깅 설정
+# 로깅 설정...
 logger = logging.getLogger(__name__)
 
 class NutritionAnalysisService:
