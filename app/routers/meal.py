@@ -4,8 +4,6 @@ import logging
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from services import service_manager
 from app.extensions import db  # 데이터베이스 연결
-from models.meal import Meal  # Meal 모델 (식사 기록)
-from models.food import Food  # Food 모델 (음식 목록)
 from services.meal_service import MealService
 
 # Blueprint 정의
@@ -136,12 +134,10 @@ def get_meal_records():
 @meal_bp.route('/<meal_id>', methods=['GET'])
 @jwt_required()
 def get_meal_detail(meal_id):
-    """식사 상세 정보 조회 API"""
+    """ 식사 상세 정보 조회 API """
     try:
         user_id = get_jwt_identity()
 
-        # 식사 기록 서비스 호출
-        meal_service = service_manager.get_service('meal')
         result = meal_service.get_meal_detail(meal_id, user_id)
 
         if not result.get('success', False):
@@ -153,8 +149,9 @@ def get_meal_detail(meal_id):
         }), 200
 
     except Exception as e:
-        logger.error(f"식사 상세 정보 조회 중 오류 발생: {str(e)}")
+        current_app.logger.error(f"식사 상세 정보 조회 중 오류 발생: {str(e)}")
         return jsonify({"error": "식사 정보 조회 중 오류가 발생했습니다."}), 500
+
 
 @meal_bp.route('/<int:meal_id>', methods=['PUT'])
 @jwt_required()
