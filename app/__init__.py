@@ -5,6 +5,9 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from app.config import config_by_name
 from app.extensions import db, migrate, jwt, limiter, cache
+from dotenv import load_dotenv
+load_dotenv()
+
 
 def create_app(config_name='development'):
     """애플리케이션 팩토리 함수"""
