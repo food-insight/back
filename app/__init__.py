@@ -77,6 +77,9 @@ def register_api_endpoints(app):
     """API 엔드포인트 등록 (영양 분석, 추천, 챗봇, 식단 추천 등)"""
     from flask import jsonify, request
     from services import service_manager
+    @app.route('/api/meals', methods=['OPTIONS'])
+    def handle_options():
+        return '', 204  # No Content 응답
 
     @app.route('/api/nutrition', methods=['GET'])
     def get_nutrition():
