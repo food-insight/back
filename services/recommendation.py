@@ -23,15 +23,34 @@ class RecommendationService:
     def recommend_balanced_meal(self, preferences, restrictions):
         # 예시 구현: 입력받은 preferences, restrictions에 따라 추천 식단 반환
         # 실제 로직에 맞게 수정 필요합니다.
-        recommended_meal = {
+        recommended_meals = [
+            {
             "recommended_meal": "현미밥 + 닭가슴살 or 소고기 + 달걀 + 야채  ",
             "calories": 500,
             "protein": 40,
             "carbs": 50,
             "fats": 10,
             "success": True
+        },
+        {
+            "recommended_meal": "고구마 + 두부 + 시금치",
+            "calories": 450,
+            "protein": 35,
+            "carbs": 55,
+            "fats": 8,
+            "success": True
+        },
+        {
+            "recommended_meal": "오트밀 + 계란 흰자 + 과일",
+            "calories": 480,
+            "protein": 38,
+            "carbs": 48,
+            "fats": 9,
+            "success": True
         }
-        return recommended_meal
+    ]
+        return recommended_meals
+        
 
     def __init__(self, food_db=None, rag_service=None):
         """
