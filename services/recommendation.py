@@ -6,6 +6,7 @@ from flask import current_app
 from models.user import User
 from services.food_database import FoodDatabaseService
 from services.rag_service import RAGService
+import random
 
 # 로깅 설정
 logger = logging.getLogger(__name__)
@@ -67,58 +68,109 @@ class RecommendationService:
                 "source": "static"
             }
         
-        # 데이터베이스에서 식품 정보 조회
+   
+
+    def get_similar_foods(self, food_name: str, limit=5) -> Dict[str, Any]:
+        logger.info(f"get_similar_foods 호출: food_name={food_name}, limit={limit}")
+
+        # 미리 정의된 정적 추천 목록 매핑
+        static_recommendations_map = {
+            "닭가슴살": [
+                {"name": "닭가슴살 샐러드", "reason": "신선한 채소와 함께 섭취하면 영양 균형에 도움"},
+                {"name": "흰살생선", "reason": "저지방 단백질 식품으로 대체 가능"},
+                {"name": "두부", "reason": "식물성 단백질로서 부드러운 질감"},
+                {"name": "콩고기", "reason": "채식 대체 식품으로 활용 가능"},
+                {"name": "오리고기", "reason": "부드럽고 쫄깃한 살코기의 식감이 풍부한 맛이 일품"}
+            ],
+            "샐러드": [
+                {"name": "그린 샐러드", "reason": "신선한 채소와 과일의 조합으로 상큼한 맛"},
+                {"name": "퀴노아 샐러드", "reason": "퀴노아와 다양한 채소의 건강한 조합"},
+                {"name": "치킨 시저 샐러드", "reason": "단백질과 채소가 조화를 이루는 인기 메뉴"},
+                {"name": "연어 샐러드", "reason": "오메가-3가 풍부한 연어와 신선한 채소의 조합"},
+                {"name": "시금치 샐러드", "reason": "철분과 비타민이 풍부한 건강한 샐러드"}
+            ],
+            "프로틴": [
+                {"name": "프로틴 쉐이크", "reason": "빠른 단백질 보충을 위한 이상적인 선택"},
+                {"name": "닭가슴살", "reason": "저지방, 고단백 식품으로 건강에 좋음"},
+                {"name": "두부", "reason": "식물성 단백질의 대표 식품"},
+                {"name": "계란", "reason": "고품질 단백질과 필수 영양소 제공"},
+                {"name": "소고기", "reason": "필수 아미노산이 풍부한 고단백 식품"}
+            ],
+             "치킨": [
+                {"name": "닭가슴살", "reason": "일반 치킨보다 저지방, 고단백인 건강한 부위"},
+                {"name": "구운 치킨 샐러드", "reason": "기름진 튀김 치킨 대신 구워서 건강하게 즐김"},
+                {"name": "닭가슴살 스테이크", "reason": "단백질이 풍부하고 지방이 적은 대체 식품"},
+                {"name": "훈제 닭가슴살", "reason": "가공 없이 훈제하여 건강을 고려한 선택"},
+                {"name": "치킨 브레스트", "reason": "지방 함량이 낮아 건강에 좋은 치킨 부위"}
+            ],
+            "삼겹살": [
+                {"name": "오리고기", "reason": "지방이 적고 단백질이 풍부해 건강한 대체 식품"},
+                {"name": "쇠고기 안심", "reason": "포화지방이 낮고 단백질이 풍부하여 건강에 좋음"},
+                {"name": "두부", "reason": "식물성 단백질로 포화지방이 없어 건강한 선택"},
+                {"name": "콩고기", "reason": "저지방, 고단백 대체 식품으로 활용 가능"},
+                {"name": "아보카도", "reason": "풍부한 지방과 단백질 포함함"}
+        ]
+        }
+
+        # 입력 값을 깨끗하게 정리 (앞뒤 공백 제거)
+        key = food_name.strip()
+        if key in static_recommendations_map:
+            recs = static_recommendations_map[key].copy()
+            random.shuffle(recs)
+            return {
+                "reference_food": food_name,
+                "similar_foods": recs[:limit],
+                "source": "static"
+            }
+
+        # 미리 정의된 목록에 없는 경우 기존 로직 사용 (예: DB나 RAG 기반)
         food_info = self.food_db.get_food_by_name(food_name)
         logger.info(f"DB에서 조회된 food_info: {food_info}")
 
         if food_info:
-            # DB 기반 유사 식품 찾기 (예: 카테고리, 영양소 등 기준)
             similar_foods = self.food_db.get_similar_foods(
                 food_name=food_name,
                 category=food_info.get('category'),
                 limit=limit
             )
             logger.info(f"DB에서 조회된 similar_foods: {similar_foods}")
-
-            # 만약 DB에서 추천 결과가 없다면, 더미 데이터를 생성
             if not similar_foods:
                 logger.warning("DB에서 유사 음식이 조회되지 않음. RAG 기반 추천 시도")
                 rag_query = f"{food_name}과 유사한 음식 {limit}개 추천"
                 logger.info(f"RAG 쿼리: {rag_query}")
                 rag_result = self.rag_service.query_food_info(rag_query)
                 logger.info(f"RAG 결과: {rag_result}")
-
-            parsed_recommendations = self._parse_rag_recommendations(rag_result)
-            if not parsed_recommendations:
-                parsed_recommendations = [
-                    {"name": f"{food_name} 유사 음식 {i+1}", "reason": "dummy reason"}
-                    for i in range(limit)
-                ]
-                logger.info(f"더미 parsed_recommendations 생성: {parsed_recommendations}")
-
-            return {
-                "reference_food": food_name,
-                "similar_foods": similar_foods,
-                "source": "database"
-            }
+                parsed_recommendations = self._parse_rag_recommendations(rag_result)
+                if not parsed_recommendations:
+                    parsed_recommendations = [{"name": f"{food_name} 유사 음식 {i+1}", "reason": "dummy reason"} for i in range(limit)]
+                    logger.info(f"더미 parsed_recommendations 생성: {parsed_recommendations}")
+                return {
+                    "reference_food": food_name,
+                    "similar_foods": parsed_recommendations,
+                    "source": "rag"
+                }
+            else:
+                return {
+                    "reference_food": food_name,
+                    "similar_foods": similar_foods,
+                    "source": "database"
+                }
         else:
-            # RAG 시스템 기반 유사 식품 찾기
+            logger.warning("DB에 음식 정보가 존재하지 않음. RAG 기반 추천 시도")
             rag_query = f"{food_name}과 유사한 음식 {limit}개 추천"
             logger.info(f"RAG 쿼리: {rag_query}")
             rag_result = self.rag_service.query_food_info(rag_query)
             logger.info(f"RAG 결과: {rag_result}")
-            
             parsed_recommendations = self._parse_rag_recommendations(rag_result)
-            # 만약 파싱 결과가 없으면, 더미 데이터를 생성
             if not parsed_recommendations:
                 parsed_recommendations = [{"name": f"{food_name} 유사 음식 {i+1}", "reason": "dummy reason"} for i in range(limit)]
                 logger.info(f"더미 parsed_recommendations 생성: {parsed_recommendations}")
-
             return {
                 "reference_food": food_name,
                 "similar_foods": parsed_recommendations,
                 "source": "rag"
             }
+
 
     def get_recipe_recommendations(
             self,

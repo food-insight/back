@@ -100,3 +100,5 @@ class NutritionService(BaseNutritionService):
             'carbohydrates': 0,
             'fat': 0
         })
+    
+        
