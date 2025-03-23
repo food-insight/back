@@ -80,6 +80,8 @@ def update_profile():
             user.health_goal = data['health_goal']
 
         # 알레르기 정보 업데이트
+        user.allergies = ','.join(data['allergies']) if data['allergies'] else ''
+
         if 'allergies' in data:
             # 기존 알레르기 정보 삭제
             Allergy.query.filter_by(uid=current_user_id).delete()
@@ -89,6 +91,9 @@ def update_profile():
                 for allergy_name in data['allergies']:
                     allergy = Allergy(uid=current_user_id, allergy_name=allergy_name)
                     db.session.add(allergy)
+                    
+            # users 테이블의 allergies 필드도 동기화
+                user.allergies = ','.join(data['allergies']) if data['allergies'] else ''
 
         db.session.commit()
 
